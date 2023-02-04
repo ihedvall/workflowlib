@@ -6,8 +6,41 @@
 #include "workflow/iparameter.h"
 #include <ranges>
 #include <algorithm>
+#include <util/stringutil.h>
+
+using namespace util::xml;
 
 namespace workflow {
+
+IParameter::~IParameter() {
+
+}
+
+IParameter::IParameter(const IParameter& parameter)
+: name_(parameter.name_),
+  unit_(parameter.unit_),
+  description_(parameter.description_),
+  device_(parameter.device_),
+  signal_(parameter.signal_),
+  identity_(parameter.identity_),
+  display_name_(parameter.display_name_),
+  data_type_(parameter.data_type_),
+  enum_list_(parameter.enum_list_)
+{
+}
+
+bool IParameter::operator==(const IParameter& parameter) const {
+  if (name_ != parameter.name_) return false;
+  if (unit_ != parameter.unit_) return false;
+  if (description_ != parameter.description_) return false;
+  if (device_ != parameter.device_) return false;
+  if (signal_ != parameter.signal_) return false;
+  if (identity_ != parameter.identity_) return false;
+  if (display_name_ != parameter.display_name_) return false;
+  if (data_type_ != parameter.data_type_) return false;
+  if (enum_list_ != parameter.enum_list_) return false;
+  return true;
+}
 
 template <>
 bool IParameter::GetValue(bool& value) const {
@@ -365,6 +398,19 @@ void IParameter::SetValue(bool valid, const ByteArray& value) {
   }
 }
 
+void IParameter::DataTypeAsString(const std::string& type) {
+  IParameter temp;
+  for (auto index = static_cast<int>(ParameterDataType::FloatType);
+       index <= static_cast<int>(ParameterDataType::ByteArrayType);
+       ++index) {
+    temp.DataType(static_cast<ParameterDataType>(index));
+    const auto type_string = temp.DataTypeAsString();
+    if (util::string::IEquals(type, type_string)) {
+      DataType(temp.DataType());
+      return;
+    }
+  }
+}
 
 std::string IParameter::DataTypeAsString() const {
   switch (DataType()) {
@@ -414,5 +460,56 @@ void IParameter::Tick() {}
 void IParameter::Exit() {
   Valid(false);
 }
+
+void IParameter::SaveXml(IXmlNode& root) const {
+  auto& parameter_root = root.AddNode("Parameter");
+  parameter_root.SetAttribute("name", name_);
+  if (!identity_.empty()) {
+    parameter_root.SetAttribute("id", identity_);
+  }
+
+  parameter_root.SetProperty("Name", name_);
+  parameter_root.SetProperty("Unit", unit_);
+  parameter_root.SetProperty("Description", description_);
+  parameter_root.SetProperty("Device", device_);
+  parameter_root.SetProperty("Signal", signal_);
+  parameter_root.SetProperty("Identity", identity_);
+  parameter_root.SetProperty("DisplayName", display_name_);
+  parameter_root.SetProperty("DataType", DataTypeAsString());
+  if (!enum_list_.empty()) {
+    auto& enum_root = parameter_root.AddNode("EnumList");
+    for (const auto& item : enum_list_) {
+      auto& enum_node = enum_root.AddNode("Enum");
+      enum_node.SetAttribute("id", item.first);
+      enum_node.SetAttribute("value", item.second);
+    }
+  }
+}
+
+void IParameter::ReadXml(const IXmlNode& root) {
+  name_ = root.Property<std::string>("Name");
+  unit_ = root.Property<std::string>("Unit");
+  description_ = root.Property<std::string>("Description");
+  device_ = root.Property<std::string>("Device");
+  signal_ = root.Property<std::string>("Signal");
+  identity_ = root.Property<std::string>("Identity");
+  display_name_ = root.Property<std::string>("DisplayName");
+  DataTypeAsString( root.Property<std::string>("DataType"));
+  const auto* enum_root = root.GetNode("EnumList");
+  if (enum_root != nullptr) {
+    enum_list_.clear();
+    IXmlNode::ChildList list;
+    enum_root->GetChildList(list);
+    for (const auto* item : list) {
+      if (item == nullptr || !item->IsTagName("Enum")) {
+        continue;
+      }
+      const auto id = item->Attribute<int64_t>("id");
+      const auto value = item->Attribute<std::string>("value");
+      enum_list_.insert({id,value});
+    }
+  }
+}
+
 
 }  // namespace workflow

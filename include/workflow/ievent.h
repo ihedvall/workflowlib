@@ -11,23 +11,26 @@
 #include "workflow/iparameter.h"
 
 namespace workflow {
-enum class WorkflowEventType {
-  ManualTrig,
-  CyclicTrig,
-  ScheduleTrig,
-  ExternalTrig
+enum class EventType {
+  Internal,
+  External,
+  Periodic,
+  Parameter,
 };
 
 class IEvent : public IParameter {
  public:
   IEvent();
-
   ~IEvent() override;
+  IEvent(const IEvent& event);
+  [[nodiscard]] bool operator == (const IEvent& event) const;
 
-  void Type(WorkflowEventType type) {type_ = type;}
-  [[nodiscard]] WorkflowEventType Type() const {return type_;}
+  void Type(EventType type) {type_ = type;}
+  [[nodiscard]] EventType Type() const {return type_;}
+  void EventTypeAsString(const std::string& type);
+  [[nodiscard]] std::string EventTypeAsString() const;
 
-  virtual std::unique_ptr<IEvent> Create() = 0;
+  //virtual std::unique_ptr<IEvent> Create() = 0;
 
   void AddRunner(std::unique_ptr<IRunner>& runner);
 
@@ -35,7 +38,7 @@ class IEvent : public IParameter {
 
  private:
 
-  WorkflowEventType type_ = WorkflowEventType::ManualTrig;
+  EventType type_ = EventType::External;
   std::unique_ptr<IRunner> runner_;
 };
 

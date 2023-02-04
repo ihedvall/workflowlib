@@ -8,32 +8,50 @@
 #include <atomic>
 #include <condition_variable>
 #include <vector>
+#include <memory>
+
+#include "workflow/irunner.h"
+#include <util/ixmlnode.h>
 
 namespace workflow {
+using RunnerList = std::vector<std::unique_ptr<IRunner>>;
 
 class IWorkflow {
  public:
+  IWorkflow() = default;
+  virtual ~IWorkflow() = default;
+  IWorkflow(const IWorkflow& workflow);
+  [[nodiscard]] bool operator == ( const IWorkflow& workflow) const;
+
   void Name(const std::string& name) {name_ = name;}
   [[nodiscard]] const std::string& Name() const {return name_;}
 
   void Description(const std::string& desc) {description_ = desc;}
   [[nodiscard]] const std::string& Description() const {return description_;}
 
-  [[nodiscard]] std::vector<std::string>& StartEvents() {return start_events_;}
-  [[nodiscard]] const std::vector<std::string>& StartEvents() const {
-    return start_events_;
+  void StartEvent(const std::string& event) {start_event_ = event;}
+  [[nodiscard]] const std::string& StartEvent() const {
+    return start_event_;
   }
+
+  [[nodiscard]] RunnerList& Runners() {return runner_list_;}
+  void AddRunner(std::unique_ptr<IRunner>& runner);
 
   virtual void OnStart();
   [[nodiscard]] bool IsRunning() const {return running_;}
+
+  virtual void SaveXml(util::xml::IXmlNode& root) const;
+  virtual void ReadXml(const util::xml::IXmlNode& root);
  protected:
   std::atomic<bool> start_ = false;
   std::condition_variable start_condition_;
   std::atomic<bool> running_ = false;
+  RunnerList runner_list_;
+
  private:
   std::string name_;
   std::string description_;
-  std::vector<std::string> start_events_;
+  std::string start_event_;
 };
 
 }  // namespace workflow

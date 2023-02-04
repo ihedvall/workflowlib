@@ -23,8 +23,10 @@ enum class RunnerType : int {
 
 class IRunner {
  public:
-
+  IRunner() = default;
   virtual ~IRunner() = default;
+
+  [[nodiscard]] bool operator==(const IRunner& runner) const;
 
   void Name(const std::string& name) {name_ = name;}
   [[nodiscard]] const std::string& Name() const {return name_;}
@@ -40,15 +42,16 @@ class IRunner {
   void Type(RunnerType type) {type_ = type;}
   [[nodiscard]] RunnerType Type() const {return type_;}
 
+  void TypeAsString(const std::string& type);
+  [[nodiscard]] std::string TypeAsString() const;
+
+
   void Period(double period) {period_ = period;}
   [[nodiscard]] double Period() const {return period_;}
 
-  [[nodiscard]] std::vector<std::string>& InputArguments() {
-    return input_arguments_;
-  }
-  [[nodiscard]] const std::vector<std::string>& InputArguments() const {
-    return input_arguments_;
-  }
+  void Arguments(const std::string& arg) { arguments_ = arg; }
+  [[nodiscard]] const std::string& Arguments() const { return arguments_; }
+
 
   [[nodiscard]] std::vector<IParameter*>& Parameters() {
     return parameter_list_;
@@ -61,18 +64,20 @@ class IRunner {
     last_error_ = error;
   }
   [[nodiscard]] const std::string& LastError() const { return last_error_; }
-  virtual void Init() = 0;
-  virtual void Tick() = 0;
-  virtual void Exit() = 0;
+  virtual void Init();
+  virtual void Tick();
+  virtual void Exit();
 
+  virtual void SaveXml(util::xml::IXmlNode& root) const;
+  virtual void ReadXml(const util::xml::IXmlNode& root);
  protected:
-  IRunner() = default;
+
  private:
   std::string name_;
   std::string description_;
   std::string documentation_;
   std::string last_error_;
-  std::vector<std::string> input_arguments_;
+  std::string arguments_;
   std::vector<IParameter*> parameter_list_;
 
   RunnerType type_ = RunnerType::InternalRunner;

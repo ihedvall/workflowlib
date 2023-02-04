@@ -14,6 +14,8 @@
 #include <mutex>
 #pragma managed(pop)
 
+#include <util/ixmlnode.h>
+
 namespace workflow {
 enum class ParameterDataType : int {
   FloatType = 0, ///< 64-bit floating point
@@ -32,7 +34,11 @@ using EnumList = std::map<int64_t, std::string>;
 class IParameter {
  public:
   IParameter() = default;
-  virtual ~IParameter() = default;
+  virtual ~IParameter();
+
+  IParameter(const IParameter& parameter);
+  [[nodiscard]] bool operator == (const IParameter& parameter) const;
+
   void Name(const std::string& name) { name_ = name; }
   [[nodiscard]] const std::string& Name() const { return name_; }
 
@@ -60,6 +66,7 @@ class IParameter {
 
   void DataType(ParameterDataType type) { data_type_ = type; }
   [[nodiscard]] ParameterDataType DataType() const { return data_type_; }
+  void DataTypeAsString(const std::string& type);
   [[nodiscard]] std::string DataTypeAsString() const;
 
   void Enums(const EnumList& enum_list) {enum_list_ = enum_list;}
@@ -77,6 +84,10 @@ class IParameter {
   virtual void Init();
   virtual void Tick();
   virtual void Exit();
+
+  virtual void SaveXml(util::xml::IXmlNode& root) const;
+  virtual void ReadXml(const util::xml::IXmlNode& root);
+
  private:
   std::string name_; ///< Name used internally
   std::string unit_; ///< Unit of measure

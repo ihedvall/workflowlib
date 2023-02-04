@@ -22,7 +22,7 @@ include(script/doxygen.cmake)
 include(script/wxwidgets.cmake)
 
 add_library(workflow STATIC
-        src/eventengine.cpp include/workflow/eventengine.h src/ievent.cpp include/workflow/ievent.h src/iworkflow.cpp include/workflow/iworkflow.h src/workflowengine.cpp src/workflowengine.h src/irunner.cpp include/workflow/irunner.h src/iparameter.cpp include/workflow/iparameter.h src/parametercontainer.cpp include/workflow/parametercontainer.h src/workflowserver.cpp include/workflow/workflowserver.h)
+        src/eventengine.cpp include/workflow/eventengine.h src/ievent.cpp include/workflow/ievent.h src/iworkflow.cpp include/workflow/iworkflow.h src/workflowengine.cpp src/workflowengine.h src/irunner.cpp include/workflow/irunner.h src/iparameter.cpp include/workflow/iparameter.h src/parametercontainer.cpp include/workflow/parametercontainer.h src/workflowserver.cpp include/workflow/workflowserver.h src/idevice.cpp include/workflow/idevice.h workflowexplorer/src/eventdialog.cpp workflowexplorer/src/eventdialog.h)
 
 target_include_directories(workflow PUBLIC
         $<INSTALL_INTERFACE:include>
@@ -38,6 +38,10 @@ target_compile_definitions(workflow PRIVATE XML_STATIC)
 
 if (MSVC)
     target_compile_definitions(workflow PRIVATE _WIN32_WINNT=0x0A00)
+endif ()
+
+if (wxWidgets_FOUND AND WORKFLOW_TOOL)
+    add_subdirectory(workflowexplorer)
 endif ()
 
 if (GTEST_FOUND AND WORKFLOW_TEST)
