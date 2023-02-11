@@ -17,7 +17,11 @@ wxArrayString Events() {
   const auto* engine = server.GetEventEngine();
   if (engine != nullptr) {
     const auto& list = engine->Events();
-    for (const auto& event : list) {
+    for (const auto& itr : list) {
+      const auto* event = itr.second.get();
+      if (event == nullptr) {
+        continue;
+      }
       temp.Add(wxString::FromUTF8(event->Name()));
     }
   }

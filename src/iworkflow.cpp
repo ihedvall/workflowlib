@@ -6,22 +6,41 @@
 #include "workflow/iworkflow.h"
 #include <algorithm>
 #include <ranges>
+#include <util/stringutil.h>
 
 using namespace util::xml;
-
+using namespace util::string;
 namespace workflow {
 
 IWorkflow::IWorkflow(const IWorkflow& workflow)
 : name_(workflow.name_),
   description_(workflow.description_),
   start_event_(workflow.start_event_) {
-  for ( const auto& runner : runner_list_) {
+  for ( const auto& runner : workflow.runner_list_) {
     if (!runner) {
       continue;
     }
     auto temp = std::make_unique<IRunner>(*runner);
     runner_list_.push_back(std::move(temp));
   }
+}
+
+IWorkflow& IWorkflow::operator=(const IWorkflow& workflow) {
+  if (this == & workflow) {
+    return *this;
+  }
+  name_ = workflow.name_;
+  description_ = workflow.description_;
+  start_event_ = workflow.start_event_;
+  runner_list_.clear();
+  for (const auto& runner : workflow.runner_list_) {
+    if (!runner) {
+      continue;
+    }
+    auto temp = std::make_unique<IRunner>(*runner);
+    runner_list_.push_back(std::move(temp));
+  }
+  return *this;
 }
 
 bool IWorkflow::operator==(const IWorkflow& workflow) const {
@@ -41,9 +60,17 @@ void IWorkflow::OnStart() {
   start_condition_.notify_all();
 }
 
-void IWorkflow::AddRunner(std::unique_ptr<IRunner>& runner) {
-  if (runner) {
-    runner_list_.emplace_back(std::move(runner));
+void IWorkflow::AddRunner(const IRunner& runner) {
+  auto temp = std::make_unique<IRunner>(runner);
+  runner_list_.emplace_back(std::move(temp));
+}
+
+void IWorkflow::DeleteRunner(const IRunner* runner) {
+  auto itr = std::ranges::find_if(runner_list_, [&] (const auto& item) {
+    return item && item.get() == runner;
+  });
+  if (itr != runner_list_.end()) {
+    runner_list_.erase(itr);
   }
 }
 
@@ -83,6 +110,57 @@ void IWorkflow::ReadXml(const IXmlNode& root) {
   }
 }
 
+const IRunner* IWorkflow::GetRunner(const std::string& name) const {
+  const auto itr = std::ranges::find_if(runner_list_, [&] (const auto& runner) {
+    return runner && IEquals(name, runner->Name());
+  });
+  return itr == runner_list_.cend() ? nullptr : itr->get();
+}
 
+IRunner* IWorkflow::GetRunner(const std::string& name) {
+  auto itr = std::ranges::find_if(runner_list_, [&] (const auto& runner) {
+    return runner && IEquals(name, runner->Name());
+  });
+  return itr == runner_list_.end() ? nullptr : itr->get();
+}
+
+void IWorkflow::MoveUp(const IRunner* runner) {
+  if (runner == nullptr || runner_list_.size() <= 1) {
+    return;
+  }
+
+  auto itr = std::ranges::find_if(runner_list_, [&] (const auto& item) {
+    return item && item.get() == runner;
+  });
+  if (itr == runner_list_.end() || itr == runner_list_.begin()) {
+    return;
+  }
+  auto prev = itr;
+  --prev;
+  auto temp = std::move(*prev);
+  *prev = std::move(*itr);
+  *itr = std::move(temp);
+}
+
+void IWorkflow::MoveDown(const IRunner* runner) {
+  if (runner == nullptr || runner_list_.size() <= 1) {
+    return;
+  }
+
+  auto itr = std::ranges::find_if(runner_list_, [&] (const auto& item) {
+    return item && item.get() == runner;
+  });
+  if (itr == runner_list_.end()) {
+    return;
+  }
+  auto next = itr;
+  ++next;
+  if (next == runner_list_.end()) {
+    return;
+  }
+  auto temp = std::move(*next);
+  *next = std::move(*itr);
+  *itr = std::move(temp);
+}
 
 }  // namespace workflow

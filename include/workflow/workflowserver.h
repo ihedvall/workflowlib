@@ -17,7 +17,7 @@ using WorkflowList = std::vector<std::unique_ptr<IWorkflow>>;
 
 class WorkflowServer {
  public:
-  WorkflowServer() = default;
+  WorkflowServer();
   virtual ~WorkflowServer() = default;
 
   WorkflowServer(const WorkflowServer& server);
@@ -40,6 +40,12 @@ class WorkflowServer {
 
   [[nodiscard]] WorkflowList& Workflows() {return workflow_list_;}
   [[nodiscard]] const WorkflowList& Workflows() const {return workflow_list_;}
+  void AddWorkflow(const IWorkflow& workflow);
+  void DeleteWorkflow(const IWorkflow* workflow);
+  [[nodiscard]] const IWorkflow* GetWorkflow(const std::string& name) const;
+  [[nodiscard]] IWorkflow* GetWorkflow(const std::string& name);
+  void MoveUp(const IWorkflow* workflow);
+  void MoveDown(const IWorkflow* workflow);
 
   virtual void Init();
   virtual void Tick();

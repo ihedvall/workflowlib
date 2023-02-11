@@ -11,6 +11,7 @@
 #include <string>
 
 #include "workflowpanel.h"
+#include "eventpanel.h"
 #include "parameterpanel.h"
 #include "workflowexplorer.h"
 #include "workflowexplorerid.h"
@@ -18,9 +19,18 @@
 namespace {
 
 constexpr int kPageWorkflow = 0;
-//constexpr int kPageEvent = 1;
-constexpr int kPageParameter = 1;
+constexpr int kPageEvent = 1;
+constexpr int kPageDevice = 2;
+constexpr int kPageParameter = 3;
 
+constexpr int kBmpWorkflowHot = 0;
+constexpr int kBmpWorkflowDisabled = 1;
+constexpr int kBmpEventHot = 2;
+constexpr int kBmpEventDisabled = 3;
+constexpr int kBmpDeviceHot = 4;
+constexpr int kBmpDeviceDisabled = 5;
+constexpr int kBmpParameterHot = 6;
+constexpr int kBmpParameterDisabled = 7;
 
 }
 
@@ -32,13 +42,56 @@ wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
   EVT_CLOSE(MainFrame::OnClose)
   EVT_NOTEBOOK_PAGE_CHANGED(kIdNotebook, MainFrame::OnPageChange)
 
+  EVT_UPDATE_UI(kIdNewWorkflow, MainFrame::OnUpdateWorkflow)
+  EVT_MENU(kIdNewWorkflow, MainFrame::OnWorkflow)
+  EVT_UPDATE_UI(kIdEditWorkflow, MainFrame::OnUpdateWorkflow)
+  EVT_MENU(kIdEditWorkflow, MainFrame::OnWorkflow)
+  EVT_UPDATE_UI(kIdCopyWorkflow, MainFrame::OnUpdateWorkflow)
+  EVT_MENU(kIdCopyWorkflow, MainFrame::OnWorkflow)
+  EVT_UPDATE_UI(kIdRenameWorkflow, MainFrame::OnUpdateWorkflow)
+  EVT_MENU(kIdRenameWorkflow, MainFrame::OnWorkflow)
+  EVT_UPDATE_UI(kIdDeleteWorkflow, MainFrame::OnUpdateWorkflow)
+  EVT_MENU(kIdDeleteWorkflow, MainFrame::OnWorkflow)
+
+  EVT_UPDATE_UI(kIdNewRunner, MainFrame::OnUpdateWorkflow)
+  EVT_MENU(kIdNewRunner, MainFrame::OnWorkflow)
+  EVT_UPDATE_UI(kIdEditRunner, MainFrame::OnUpdateWorkflow)
+  EVT_MENU(kIdEditRunner, MainFrame::OnWorkflow)
+  EVT_UPDATE_UI(kIdCopyRunner, MainFrame::OnUpdateWorkflow)
+  EVT_MENU(kIdCopyRunner, MainFrame::OnWorkflow)
+  EVT_UPDATE_UI(kIdRenameRunner, MainFrame::OnUpdateWorkflow)
+  EVT_MENU(kIdRenameRunner, MainFrame::OnWorkflow)
+  EVT_UPDATE_UI(kIdDeleteRunner, MainFrame::OnUpdateWorkflow)
+  EVT_MENU(kIdDeleteRunner, MainFrame::OnWorkflow)
+
+  EVT_UPDATE_UI(kIdUpWorkflow, MainFrame::OnUpdateWorkflow)
+  EVT_MENU(kIdUpWorkflow, MainFrame::OnWorkflow)
+  EVT_UPDATE_UI(kIdDownWorkflow, MainFrame::OnUpdateWorkflow)
+  EVT_MENU(kIdDownWorkflow, MainFrame::OnWorkflow)
+
+  EVT_UPDATE_UI(kIdUpRunner, MainFrame::OnUpdateWorkflow)
+  EVT_MENU(kIdUpRunner, MainFrame::OnWorkflow)
+  EVT_UPDATE_UI(kIdDownRunner, MainFrame::OnUpdateWorkflow)
+  EVT_MENU(kIdDownRunner, MainFrame::OnWorkflow)
+
+  EVT_UPDATE_UI(kIdNewEvent, MainFrame::OnUpdateEvent)
+  EVT_MENU(kIdNewEvent, MainFrame::OnEvent)
+  EVT_UPDATE_UI(kIdEditEvent, MainFrame::OnUpdateEvent)
+  EVT_MENU(kIdEditEvent, MainFrame::OnEvent)
+  EVT_UPDATE_UI(kIdCopyEvent, MainFrame::OnUpdateEvent)
+  EVT_MENU(kIdCopyEvent, MainFrame::OnEvent)
+  EVT_UPDATE_UI(kIdRenameEvent, MainFrame::OnUpdateEvent)
+  EVT_MENU(kIdRenameEvent, MainFrame::OnEvent)
+  EVT_UPDATE_UI(kIdDeleteEvent, MainFrame::OnUpdateEvent)
+  EVT_MENU(kIdDeleteEvent, MainFrame::OnEvent)
+
   EVT_UPDATE_UI(kIdNewParameter, MainFrame::OnUpdateParameter)
   EVT_MENU(kIdNewParameter, MainFrame::OnParameter)
 wxEND_EVENT_TABLE()
 
 MainFrame::MainFrame(const wxString& title, const wxPoint& start_pos, const wxSize& start_size, bool maximized)
     : wxFrame(nullptr, wxID_ANY, title, start_pos, start_size),
-    image_list_(32,32,false,6) {
+    image_list_(32,32,false,8) {
   wxTopLevelWindowMSW::Maximize(maximized);
   SetIcon(wxIcon("APP_ICON", wxBITMAP_TYPE_ICO_RESOURCE));
   image_list_.Add(wxBitmap("NOTEBOOK_LIST", wxBITMAP_TYPE_BMP_RESOURCE));
@@ -52,9 +105,31 @@ MainFrame::MainFrame(const wxString& title, const wxPoint& start_pos, const wxSi
 
   // Workflow
   auto *menu_workflow = new wxMenu;
+  menu_workflow->Append(kIdUpWorkflow, wxGetStockLabel(wxID_UP));
+  menu_workflow->Append(kIdDownWorkflow, wxGetStockLabel(wxID_DOWN));
+  menu_workflow->AppendSeparator();
   menu_workflow->Append(kIdNewWorkflow, wxGetStockLabel(wxID_NEW));
   menu_workflow->Append(kIdEditWorkflow, wxGetStockLabel(wxID_EDIT));
+  menu_workflow->Append(kIdCopyWorkflow, wxGetStockLabel(wxID_COPY));
+  menu_workflow->Append(kIdRenameWorkflow, wxString("Rename"));
   menu_workflow->Append(kIdDeleteWorkflow, wxGetStockLabel(wxID_DELETE));
+
+  auto *menu_runner = new wxMenu;
+  menu_runner->Append(kIdUpRunner, wxGetStockLabel(wxID_UP));
+  menu_runner->Append(kIdDownRunner, wxGetStockLabel(wxID_DOWN));
+  menu_runner->AppendSeparator();
+  menu_runner->Append(kIdNewRunner, wxGetStockLabel(wxID_NEW));
+  menu_runner->Append(kIdEditRunner, wxGetStockLabel(wxID_EDIT));
+  menu_runner->Append(kIdCopyRunner, wxGetStockLabel(wxID_COPY));
+  menu_runner->Append(kIdRenameRunner, wxString("Rename"));
+  menu_runner->Append(kIdDeleteRunner, wxGetStockLabel(wxID_DELETE));
+
+  auto *menu_event = new wxMenu;
+  menu_event->Append(kIdNewEvent, wxGetStockLabel(wxID_NEW));
+  menu_event->Append(kIdEditEvent, wxGetStockLabel(wxID_EDIT));
+  menu_event->Append(kIdCopyEvent, wxGetStockLabel(wxID_COPY));
+  menu_event->Append(kIdRenameEvent, wxString("Rename"));
+  menu_event->Append(kIdDeleteEvent, wxGetStockLabel(wxID_DELETE));
 
   // Parameter
   auto *menu_parameter = new wxMenu;
@@ -71,6 +146,8 @@ MainFrame::MainFrame(const wxString& title, const wxPoint& start_pos, const wxSi
   auto *menu_bar = new wxMenuBar;
   menu_bar->Append(menu_file, wxGetStockLabel(wxID_FILE));
   menu_bar->Append(menu_workflow, L"Workflow");
+  menu_bar->Append(menu_runner, L"Task");
+  menu_bar->Append(menu_event, L"Event");
   menu_bar->Append(menu_parameter, L"Parameter");
   menu_bar->Append(menu_about, wxGetStockLabel(wxID_HELP));
   wxFrameBase::SetMenuBar(menu_bar);
@@ -79,32 +156,25 @@ MainFrame::MainFrame(const wxString& title, const wxPoint& start_pos, const wxSi
   notebook_->SetImageList(&image_list_);
 
   auto* workflow_tab = new WorkflowPanel(notebook_);
+  auto* event_tab = new EventPanel(notebook_);
+  auto* device_tab = new ParameterPanel(notebook_);
   auto* parameter_tab = new ParameterPanel(notebook_);
-/*
-  auto* select_tab = new MeasurementTab(notebook_);
-  auto* plot_tab = new PlotTab(notebook_);
-*/
-  notebook_->AddPage(workflow_tab, L"Workflow", true,3);
-  notebook_->AddPage(parameter_tab, L"Parameters", false,4);
-/*
-  notebook_->AddPage(select_tab, L"Selection", true,4);
-  notebook_->AddPage(plot_tab, L"Plot", true,5);
-*/
+
+  notebook_->InsertPage(kPageWorkflow, workflow_tab, L"Workflows",
+                        false, kBmpWorkflowDisabled);
+  notebook_->InsertPage(kPageEvent, event_tab, L"Events",
+                     false, kBmpEventDisabled);
+  notebook_->InsertPage(kPageDevice, device_tab, L"Devices",
+                        false, kBmpDeviceDisabled);
+  notebook_->InsertPage(kPageParameter, parameter_tab, L"Parameters",
+                        false, kBmpParameterDisabled);
 
   auto* main_sizer = new wxBoxSizer(wxVERTICAL);
   main_sizer->Add(notebook_, 1, wxALIGN_LEFT | wxALL | wxEXPAND, 0);
   SetContainingSizer(main_sizer);
 
-  auto& app = wxGetApp();
-
-  //if (app.EnvList().empty()) {
-    notebook_->SetSelection(kPageWorkflow);
-    notebook_->SetPageImage(kPageWorkflow,0);
- // } else {
- //   notebook_->SetSelection(kPageSelection);
- //   notebook_->SetPageImage(kPageSelection,1);
- // }
-
+  notebook_->SetSelection(kPageWorkflow);
+  notebook_->SetPageImage(kPageWorkflow,kBmpWorkflowHot);
 }
 
 void MainFrame::OnClose(wxCloseEvent &event) {
@@ -194,14 +264,50 @@ void MainFrame::OnPageChange(wxBookCtrlEvent &event) {
     return;
   }
   const auto old_page = event.GetOldSelection();
+  switch (old_page) {
+    case kPageWorkflow:
+      notebook_->SetPageImage(kPageWorkflow, kBmpWorkflowDisabled);
+      break;
+
+    case kPageEvent:
+      notebook_->SetPageImage(kPageEvent, kBmpEventDisabled);
+      break;
+
+    case kPageDevice:
+      notebook_->SetPageImage(kPageDevice, kBmpDeviceDisabled);
+      break;
+
+    case kPageParameter:
+      notebook_->SetPageImage(kPageParameter, kBmpParameterDisabled);
+      break;
+
+    default:
+      break;
+  }
+
   const auto page = event.GetSelection();
+  switch (page) {
+    case kPageWorkflow:
+      notebook_->SetPageImage(kPageWorkflow, kBmpWorkflowHot);
+      break;
+
+    case kPageEvent:
+      notebook_->SetPageImage(kPageEvent, kBmpEventHot);
+      break;
+
+    case kPageDevice:
+      notebook_->SetPageImage(kPageDevice, kBmpDeviceHot);
+      break;
+
+    case kPageParameter:
+      notebook_->SetPageImage(kPageParameter, kBmpParameterHot);
+      break;
+
+    default:
+      break;
+  }
+
   auto* window = notebook_->GetPage(page);
-  if (old_page != wxNOT_FOUND) {
-    notebook_->SetPageImage(old_page, old_page + 3);
-  }
-  if (page != wxNOT_FOUND) {
-    notebook_->SetPageImage(page, page);
-  }
   if (window != nullptr) {
     window->Update();
   }
@@ -227,6 +333,38 @@ void MainFrame::Update() {
     if (tab != nullptr) {
       tab->Update();
     }
+  }
+}
+
+void MainFrame::OnUpdateWorkflow(wxUpdateUIEvent& event) {
+  auto* panel = notebook_ ? notebook_->GetCurrentPage() : nullptr;
+  if (panel != nullptr && notebook_->GetSelection() == kPageWorkflow) {
+    panel->ProcessWindowEventLocally(event);
+  } else {
+    event.Enable(false);
+  }
+}
+
+void MainFrame::OnWorkflow(wxCommandEvent& event) {
+  auto* panel = notebook_ ? notebook_->GetCurrentPage() : nullptr;
+  if (panel != nullptr && notebook_->GetSelection() == kPageWorkflow) {
+    panel->ProcessWindowEventLocally(event);
+  }
+}
+
+void MainFrame::OnUpdateEvent(wxUpdateUIEvent& event) {
+  auto* panel = notebook_ ? notebook_->GetCurrentPage() : nullptr;
+  if (panel != nullptr && notebook_->GetSelection() == kPageEvent) {
+    panel->ProcessWindowEventLocally(event);
+  } else {
+    event.Enable(false);
+  }
+}
+
+void MainFrame::OnEvent(wxCommandEvent& event) {
+  auto* panel = notebook_ ? notebook_->GetCurrentPage() : nullptr;
+  if (panel != nullptr && notebook_->GetSelection() == kPageEvent) {
+    panel->ProcessWindowEventLocally(event);
   }
 }
 

@@ -297,7 +297,7 @@ void WorkflowExplorer::OnUpdateSaveFile(wxUpdateUIEvent& event) {
 }
 
 bool WorkflowExplorer::IsModified() const {
-  return !(original_ == server_);
+  return !(server_ == original_);
 }
 
 void WorkflowExplorer::OnUpdateSaveAsFile(wxUpdateUIEvent& event) {

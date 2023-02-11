@@ -6,9 +6,19 @@
 #include "workflow/workflowserver.h"
 #include <algorithm>
 #include <ranges>
+#include <util/stringutil.h>
 
 using namespace util::xml;
+using namespace util::string;
 namespace workflow {
+
+WorkflowServer::WorkflowServer() {
+ auto temp1 = std::make_unique<EventEngine>();
+ event_engine_ = std::move(temp1);
+
+ auto temp2 = std::make_unique<ParameterContainer>();
+ parameter_container_ = std::move(temp2);
+}
 
 WorkflowServer::WorkflowServer(const WorkflowServer& server)
 : name_(server.name_),
@@ -53,10 +63,9 @@ WorkflowServer& WorkflowServer::operator=(const WorkflowServer& server) {
 
   workflow_list_.clear();
   for (const auto& workflow : server.workflow_list_) {
-    if (!workflow) {
-      auto temp = std::make_unique<IWorkflow>(*workflow);
-      workflow_list_.push_back(std::move(temp));
-    }
+    if (!workflow) continue;
+    auto temp = std::make_unique<IWorkflow>(*workflow);
+    workflow_list_.push_back(std::move(temp));
   }
 
   return *this;
@@ -115,6 +124,34 @@ EventEngine* WorkflowServer::GetEventEngine() {
 
 const EventEngine* WorkflowServer::GetEventEngine() const {
   return event_engine_.get();
+}
+
+void WorkflowServer::AddWorkflow(const IWorkflow& workflow) {
+  auto temp = std::make_unique<IWorkflow>(workflow);
+  workflow_list_.push_back(std::move(temp));
+}
+
+void WorkflowServer::DeleteWorkflow(const IWorkflow* workflow) {
+  auto itr = std::ranges::find_if(workflow_list_, [&] (const auto& item) {
+    return item.get() == workflow;
+  });
+  if (itr != workflow_list_.end()) {
+    workflow_list_.erase(itr);
+  }
+}
+
+const IWorkflow* WorkflowServer::GetWorkflow(const std::string& name) const {
+  const auto itr = std::ranges::find_if(workflow_list_,
+        [&] (const auto& workflow) {
+        return workflow && IEquals(name, workflow->Name()); });
+  return itr != workflow_list_.cend() ? itr->get() : nullptr;
+}
+
+IWorkflow* WorkflowServer::GetWorkflow(const std::string& name) {
+  auto itr = std::ranges::find_if(workflow_list_,
+                                        [&] (const auto& workflow) {
+                                          return workflow && IEquals(name, workflow->Name()); });
+  return itr != workflow_list_.end() ? itr->get() : nullptr;
 }
 
 void WorkflowServer::Init() {
@@ -214,5 +251,43 @@ void WorkflowServer::Clear() {
   workflow_list_.clear();
 }
 
+void WorkflowServer::MoveUp(const IWorkflow* workflow) {
+  if (workflow == nullptr || workflow_list_.size() <= 1) {
+    return;
+  }
+
+  auto itr = std::ranges::find_if(workflow_list_, [&] (const auto& item) {
+    return item && item.get() == workflow;
+  });
+  if (itr == workflow_list_.end() || itr == workflow_list_.begin()) {
+    return;
+  }
+  auto prev = itr;
+  --prev;
+  auto temp = std::move(*prev);
+  *prev = std::move(*itr);
+  *itr = std::move(temp);
+}
+
+void WorkflowServer::MoveDown(const IWorkflow* workflow) {
+  if (workflow == nullptr || workflow_list_.size() <= 1) {
+    return;
+  }
+
+  auto itr = std::ranges::find_if(workflow_list_, [&] (const auto& item) {
+    return item && item.get() == workflow;
+  });
+  if (itr == workflow_list_.end()) {
+    return;
+  }
+  auto next = itr;
+  ++next;
+  if (next == workflow_list_.end()) {
+    return;
+  }
+  auto temp = std::move(*next);
+  *next = std::move(*itr);
+  *itr = std::move(temp);
+}
 
 }  // namespace workflow

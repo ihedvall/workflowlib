@@ -6,12 +6,13 @@
 #pragma once
 #include "workflow/ievent.h"
 #include <memory>
-#include <vector>
+#include <map>
 #include <util/ixmlnode.h>
-
+#include <util/stringutil.h>
 namespace workflow {
 
-using EventList = std::vector<std::unique_ptr<IEvent>>;
+using EventList = std::map<std::string, std::unique_ptr<IEvent>,
+    util::string::IgnoreCase>;
 
 class EventEngine {
  public:
@@ -24,7 +25,10 @@ class EventEngine {
 
   [[nodiscard]] EventList& Events() {return event_list_;}
   [[nodiscard]] const EventList& Events() const {return event_list_;}
-
+  [[nodiscard]] const IEvent* GetEvent(const std::string& name) const;
+  [[nodiscard]] IEvent* GetEvent(const std::string& name);
+  void AddEvent(const IEvent& event);
+  void DeleteEvent(const IEvent* event);
 
   virtual void Init();
   virtual void Tick();

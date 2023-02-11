@@ -6,18 +6,22 @@
 #include "workflow/ievent.h"
 #include <util/stringutil.h>
 
+using namespace util::xml;
+
 namespace workflow {
 
 IEvent::IEvent() {
-  DataType(ParameterDataType::BooleanType);
 }
 
 IEvent::~IEvent() {
   runner_.reset();
 }
+
 IEvent::IEvent(const IEvent& event)
-: IParameter((const IParameter&) event),
-  type_(event.type_)
+:  name_(event.name_),
+   description_(event.description_),
+   type_(event.type_),
+   parameter_(event.parameter_)
 {
   if (event.runner_) {
     runner_ = std::make_unique<IRunner>(*event.runner_);
@@ -25,9 +29,11 @@ IEvent::IEvent(const IEvent& event)
 }
 
 bool IEvent::operator==(const IEvent& event) const {
+  if (name_ != event.name_) return false;
+  if (description_ != event.description_) return false;
   if (type_ != event.type_) return false;
-  return *static_cast<const IParameter*>(this) ==
-            static_cast<const IParameter&>(event);
+  if (parameter_ != event.parameter_) return false;
+  return true;
 }
 
 void IEvent::AddRunner(std::unique_ptr<IRunner>& runner) {
@@ -68,5 +74,24 @@ std::string IEvent::EventTypeAsString() const {
   return {};
 }
 
+void IEvent::SaveXml(IXmlNode& root) const {
+  auto& event_root = root.AddNode("Event");
+  event_root.SetAttribute("name", name_);
+  event_root.SetProperty("Name", name_);
+  event_root.SetProperty("Description", description_);
+  event_root.SetProperty("Type", EventTypeAsString());
+  event_root.SetProperty("Parameter", parameter_);
+}
+
+void IEvent::ReadXml(const IXmlNode& root) {
+  name_ = root.Property<std::string>("Name");
+  description_ = root.Property<std::string>("Description");
+  EventTypeAsString( root.Property<std::string>("Type"));
+  parameter_ = root.Property<std::string>("Parameter");
+}
+
+void IEvent::Init() {};
+void IEvent::Tick() {};
+void IEvent::Exit() {};
 
 }  // namespace workflow

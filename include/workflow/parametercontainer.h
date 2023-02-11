@@ -18,6 +18,8 @@ using ParameterList = std::multimap<std::string, std::unique_ptr<IParameter>>;
 
 class ParameterContainer {
  public:
+  ParameterContainer() = default;
+  virtual ~ParameterContainer() = default;
   ParameterContainer(const ParameterContainer& container);
   [[nodiscard]] bool operator == (const ParameterContainer& container) const;
 

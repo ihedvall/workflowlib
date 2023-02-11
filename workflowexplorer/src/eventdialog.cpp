@@ -16,7 +16,7 @@ wxArrayString EventTypes() {
        type <= static_cast<int>(workflow::EventType::Parameter);
        ++type) {
     event.Type(static_cast<workflow::EventType>(type));
-    const auto type_string = event.DataTypeAsString();
+    const auto type_string = event.EventTypeAsString();
     temp.Add(wxString::FromUTF8(type_string));
   }
   temp.Sort();
@@ -31,7 +31,7 @@ wxBEGIN_EVENT_TABLE(EventDialog, wxDialog) //NOLINT
 wxEND_EVENT_TABLE()
 
 EventDialog::EventDialog(wxWindow *parent, IEvent& event)
-: wxDialog(parent, wxID_ANY, "Workflow Dialog" ,
+: wxDialog(parent, wxID_ANY, "Event Dialog" ,
            wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE),
   event_(event) {
 

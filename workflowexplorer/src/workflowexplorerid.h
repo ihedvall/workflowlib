@@ -22,6 +22,8 @@ constexpr wxWindowID kIdCopyWorkflow = 22;
 constexpr wxWindowID kIdRenameWorkflow = 23;
 constexpr wxWindowID kIdDeleteWorkflow = 24;
 constexpr wxWindowID kIdWorkflowList = 25;
+constexpr wxWindowID kIdUpWorkflow = 26;
+constexpr wxWindowID kIdDownWorkflow = 27;
 
 constexpr wxWindowID kIdNewEvent = 30;
 constexpr wxWindowID kIdEditEvent = 31;
@@ -29,4 +31,13 @@ constexpr wxWindowID kIdCopyEvent = 32;
 constexpr wxWindowID kIdRenameEvent = 33;
 constexpr wxWindowID kIdDeleteEvent = 34;
 constexpr wxWindowID kIdEventList = 35;
+
+constexpr wxWindowID kIdNewRunner = 40;
+constexpr wxWindowID kIdEditRunner = 41;
+constexpr wxWindowID kIdCopyRunner = 42;
+constexpr wxWindowID kIdRenameRunner = 43;
+constexpr wxWindowID kIdDeleteRunner = 44;
+constexpr wxWindowID kIdUpRunner = 45;
+constexpr wxWindowID kIdDownRunner = 46;
+
 };

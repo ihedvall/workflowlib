@@ -21,6 +21,8 @@ class IWorkflow {
   IWorkflow() = default;
   virtual ~IWorkflow() = default;
   IWorkflow(const IWorkflow& workflow);
+  IWorkflow& operator = (const IWorkflow& workflow);
+
   [[nodiscard]] bool operator == ( const IWorkflow& workflow) const;
 
   void Name(const std::string& name) {name_ = name;}
@@ -35,13 +37,19 @@ class IWorkflow {
   }
 
   [[nodiscard]] RunnerList& Runners() {return runner_list_;}
-  void AddRunner(std::unique_ptr<IRunner>& runner);
+  [[nodiscard]] const IRunner* GetRunner(const std::string& name) const;
+  [[nodiscard]] IRunner* GetRunner(const std::string& name);
+  void AddRunner(const IRunner& runner);
+  void DeleteRunner(const IRunner* runner);
 
   virtual void OnStart();
   [[nodiscard]] bool IsRunning() const {return running_;}
 
   virtual void SaveXml(util::xml::IXmlNode& root) const;
   virtual void ReadXml(const util::xml::IXmlNode& root);
+
+  void MoveUp(const IRunner* runner);
+  void MoveDown(const IRunner* runner);
  protected:
   std::atomic<bool> start_ = false;
   std::condition_variable start_condition_;

@@ -23,6 +23,12 @@ class MainFrame : public wxFrame {
   void OnAbout(wxCommandEvent& event);
   void OnPageChange(wxBookCtrlEvent& event);
 
+  void OnUpdateWorkflow(wxUpdateUIEvent &event);
+  void OnWorkflow(wxCommandEvent& event);
+
+  void OnUpdateEvent(wxUpdateUIEvent &event);
+  void OnEvent(wxCommandEvent& event);
+
   void OnUpdateParameter(wxUpdateUIEvent &event);
   void OnParameter(wxCommandEvent& event);
 
