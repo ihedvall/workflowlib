@@ -6,11 +6,18 @@
 #include "workflow/eventengine.h"
 #include <algorithm>
 #include <ranges>
-
+#include "initevent.h"
+#include "exitevent.h"
+#include "periodicevent.h"
+#include "cyclicEvent.h"
 
 using namespace util::xml;
 
 namespace workflow {
+
+EventEngine::EventEngine() {
+  AddDefaultEvents();
+}
 
 EventEngine::~EventEngine() {
   EventEngine::Exit();
@@ -18,14 +25,15 @@ EventEngine::~EventEngine() {
 
 EventEngine::EventEngine(const EventEngine& engine)
 : initialized_(false) {
+  AddDefaultEvents();
   for (const auto& itr : engine.event_list_) {
     const auto* event = itr.second.get();
     if (event == nullptr) {
       continue;
     }
-    auto temp = std::make_unique<IEvent>(*event);
-    event_list_.emplace(event->Name(), std::move(temp));
+    AddEvent(*event);
   }
+
 }
 
 bool EventEngine::operator==(const EventEngine& engine) const {
@@ -33,7 +41,7 @@ bool EventEngine::operator==(const EventEngine& engine) const {
       event_list_, engine.event_list_,
       [] (const auto& itr1, const auto& itr2) {
         const auto* event1 = itr1.second.get();
-        const auto* event2 = itr1.second.get();
+        const auto* event2 = itr2.second.get();
         if (event1 == nullptr && event2 == nullptr) return true;
         return event1 != nullptr && event2 != nullptr && (*event1 == *event2);
       });
@@ -96,18 +104,20 @@ void EventEngine::SaveXml(util::xml::IXmlNode& root) const {
 void EventEngine::ReadXml(const util::xml::IXmlNode& root) {
   const auto* event_root = root.GetNode("EventList");
   if (event_root == nullptr) {
+    AddDefaultEvents();
     return;
   }
   IXmlNode::ChildList list;
   event_root->GetChildList(list);
   event_list_.clear();
+  AddDefaultEvents();
   for (const auto* item : list) {
     if (item == nullptr || !item->IsTagName("Event")) {
       continue;
     }
-    auto event = std::make_unique<IEvent>();
-    event->ReadXml(*item);
-    event_list_.emplace(event->Name(), std::move(event));
+    IEvent temp;
+    temp.ReadXml(*item);
+    AddEvent(temp);
   }
 }
 
@@ -128,7 +138,12 @@ IEvent* EventEngine::GetEvent(const std::string& name) {
 
 void EventEngine::AddEvent(const IEvent& event) {
   auto temp = std::make_unique<IEvent>(event);
-  event_list_.emplace(temp->Name(), std::move(temp));
+  auto itr = event_list_.find(event.Name());
+  if (itr == event_list_.end()) {
+    event_list_.emplace(temp->Name(), std::move(temp));
+  } else {
+    itr->second = std::move(temp);
+  }
 }
 
 void EventEngine::DeleteEvent(const IEvent* event) {
@@ -140,5 +155,68 @@ void EventEngine::DeleteEvent(const IEvent* event) {
     event_list_.erase(itr);
   }
 }
+
+void EventEngine::DetachWorkflows() {
+  for (auto& itr : event_list_) {
+    if (itr.second) {
+      itr.second->DetachWorkflows();
+    }
+  }
+}
+
+std::unique_ptr<IEvent> EventEngine::MakeEvent(const IEvent& source) {
+  std::unique_ptr<IEvent> event;
+  switch (source.Type()) {
+    case EventType::Internal:
+      if (source.Name() == "InitEvent") {
+        auto temp = std::make_unique<InitEvent>(source);
+        event = std::move(temp);
+      } else if (source.Name() == "ExitEvent") {
+        auto temp = std::make_unique<ExitEvent>(source);
+        event = std::move(temp);
+      } else {
+        auto temp = std::make_unique<IEvent>(source);
+        event = std::move(temp);
+      }
+      break;
+
+    case EventType::Periodic:
+      if (source.Name() == "PeriodEvent") {
+        auto temp = std::make_unique<PeriodicEvent>(source);
+        event = std::move(temp);
+      } else if (source.Name() == "CyclicEvent") {
+        auto temp = std::make_unique<CyclicEvent>(source);
+        event = std::move(temp);
+      } else {
+        auto temp = std::make_unique<IEvent>(source);
+        event = std::move(temp);
+      }
+      break;
+
+    case EventType::External:
+    case EventType::Parameter:
+    default: {
+      auto temp = std::make_unique<IEvent>(source);
+      event = std::move(temp);
+      break;
+    }
+  }
+  return event;
+}
+
+void EventEngine::AddDefaultEvents() {
+ InitEvent init_event;
+ AddEvent(init_event);
+
+ ExitEvent exit_event;
+ AddEvent(exit_event);
+
+ CyclicEvent cyclic_event;
+ AddEvent(cyclic_event);
+
+ PeriodicEvent periodic_event;
+ AddEvent(periodic_event);
+}
+
 
 }  // namespace workflow

@@ -24,6 +24,7 @@ class RunnerDialog : public wxDialog {
   //double period_ = 0.0;
   wxString arguments_;
 
+  void OnNameChange(wxCommandEvent& event);
   wxDECLARE_EVENT_TABLE();
 };
 

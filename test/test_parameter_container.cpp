@@ -8,7 +8,7 @@
 
 namespace workflow::test {
 TEST(ParameterContainer, TestDefault) {
-  ParameterContainer list();
+  ParameterContainer list;
   list.IgnoreCase(false);
   list.UniqueName(false);
   EXPECT_EQ(list.Parameters().size(), 0);

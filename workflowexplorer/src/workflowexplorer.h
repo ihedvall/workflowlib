@@ -26,6 +26,8 @@ class WorkflowExplorer : public wxApp {
   [[nodiscard]] bool IsModified() const;
   bool ReadConfigFile();
   bool SaveConfigFile();
+
+  void OnSaveAsFile(wxCommandEvent& event);
  private:
   std::string notepad_; ///< Path to notepad.exe if it exist.
   std::string config_file_;
@@ -39,7 +41,7 @@ class WorkflowExplorer : public wxApp {
   void OnUpdateSaveFile(wxUpdateUIEvent& event);
   void OnSaveFile(wxCommandEvent& event);
   void OnUpdateSaveAsFile(wxUpdateUIEvent& event);
-  void OnSaveAsFile(wxCommandEvent& event);
+
   wxDECLARE_EVENT_TABLE();
 };
 

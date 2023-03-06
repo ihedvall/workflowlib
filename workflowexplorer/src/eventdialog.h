@@ -20,6 +20,8 @@ class EventDialog : public wxDialog {
   wxString name_;
   wxString description_;
   wxString type_;
+  uint64_t period_ = 1000;
+
   wxDECLARE_EVENT_TABLE();
 };
 

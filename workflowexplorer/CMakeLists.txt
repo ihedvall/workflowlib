@@ -9,11 +9,16 @@ project(WorkflowExplorer
 add_executable(workflowexplorer
         src/workflowexplorer.cpp src/workflowexplorer.h
         src/mainframe.cpp src/mainframe.h
+        src/eventdialog.cpp src/eventdialog.h
         src/workflowexplorer.rc
         src/workflowexplorerid.h
         src/parameterpanel.cpp src/parameterpanel.h
         src/parameterdialog.cpp src/parameterdialog.h
-        src/workflowpanel.cpp src/workflowpanel.h src/workflowdialog.cpp src/workflowdialog.h src/eventpanel.cpp src/eventpanel.h src/runnerdialog.cpp src/runnerdialog.h)
+        src/workflowpanel.cpp src/workflowpanel.h
+        src/workflowdialog.cpp src/workflowdialog.h
+        src/eventpanel.cpp src/eventpanel.h
+        src/runnerdialog.cpp src/runnerdialog.h
+        src/templatepanel.cpp src/templatepanel.h)
 
 
 target_include_directories(workflowexplorer PRIVATE ${wxWidgets_INCLUDE_DIRS})

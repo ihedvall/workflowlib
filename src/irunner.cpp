@@ -7,10 +7,27 @@
 #include <util/stringutil.h>
 #include <algorithm>
 #include <ranges>
+#include "workflow/iworkflow.h"
+#include "initdirectorydata.h"
+#include "scandirectorydata.h"
+#include "sysloginput.h"
+
+#include "template_names.icc"
 
 using namespace util::xml;
+using namespace util::string;
 
 namespace workflow {
+IRunner::IRunner(const IRunner& source)
+: name_(source.name_),
+  description_(source.description_),
+  documentation_(source.documentation_),
+  arguments_(source.arguments_),
+  type_(source.type_),
+  template_(source.template_),
+  period_(source.period_),
+  parameter_list_(source.parameter_list_) {
+}
 
 bool IRunner::operator==(const IRunner& runner) const {
   if (name_ != runner.name_) return false;
@@ -18,6 +35,7 @@ bool IRunner::operator==(const IRunner& runner) const {
   if (documentation_ != runner.documentation_) return false;
   if (arguments_ != runner.arguments_) return false;
   if (type_ != runner.type_) return false;
+  if (template_ != runner.template_) return false;
   if (period_ != runner.period_) return false;
   const auto list_equal =
       std::ranges::equal(parameter_list_,runner.parameter_list_,
@@ -65,7 +83,10 @@ std::string IRunner::TypeAsString() const {
   return {};
 }
 
-void IRunner::Init() {}
+void IRunner::Init() {
+  is_ok_ = true;
+}
+
 void IRunner::Tick() {}
 void IRunner::Exit() {}
 
@@ -78,6 +99,7 @@ void IRunner::SaveXml(IXmlNode& root) const {
   runner_root.SetProperty("Documentation", documentation_);
   runner_root.SetProperty("Arguments", arguments_);
   runner_root.SetProperty("Type", TypeAsString());
+  runner_root.SetProperty("Template", template_);
   runner_root.SetProperty("Period", period_);
 }
 
@@ -87,9 +109,30 @@ void IRunner::ReadXml(const IXmlNode& root) {
   documentation_ = root.Property<std::string>("Documentation");
   arguments_ = root.Property<std::string>("Arguments");
   TypeAsString(root.Property<std::string>("Type"));
+  template_ = root.Property<std::string>("Template");
   period_ = root.Property<double>("Period");
 }
 
+void IRunner::AttachWorkflow(IWorkflow* workflow) {
+  workflow_ = workflow;
+}
 
+std::unique_ptr<IRunner> IRunner::Create(const IRunner& source) {
+  std::unique_ptr<IRunner> runner;
+  const auto& template_name = source.Template();
+  if (IEquals(template_name, kInitDirectory.data())) {
+    auto temp = std::make_unique<InitDirectoryData>(source);
+    runner = std::move(temp);
+  } else if (IEquals(template_name, kScanDirectory.data())) {
+    auto temp = std::make_unique<ScanDirectoryData>(source);
+    runner = std::move(temp);
+  } else if (IEquals(template_name, kSyslogInput.data())) {
+    auto temp = std::make_unique<SyslogInput>(source);
+    runner = std::move(temp);
+  } else {
+    runner = std::make_unique<IRunner>(source);
+  }
+  return runner;
+}
 
 }  // namespace workflow

@@ -22,7 +22,19 @@ include(script/doxygen.cmake)
 include(script/wxwidgets.cmake)
 
 add_library(workflow STATIC
-        src/eventengine.cpp include/workflow/eventengine.h src/ievent.cpp include/workflow/ievent.h src/iworkflow.cpp include/workflow/iworkflow.h src/workflowengine.cpp src/workflowengine.h src/irunner.cpp include/workflow/irunner.h src/iparameter.cpp include/workflow/iparameter.h src/parametercontainer.cpp include/workflow/parametercontainer.h src/workflowserver.cpp include/workflow/workflowserver.h src/idevice.cpp include/workflow/idevice.h workflowexplorer/src/eventdialog.cpp workflowexplorer/src/eventdialog.h)
+        src/eventengine.cpp include/workflow/eventengine.h
+        src/ievent.cpp include/workflow/ievent.h
+        src/iworkflow.cpp include/workflow/iworkflow.h
+        src/workflowengine.cpp src/workflowengine.h
+        src/irunner.cpp include/workflow/irunner.h
+        src/iparameter.cpp include/workflow/iparameter.h
+        src/parametercontainer.cpp include/workflow/parametercontainer.h
+        src/workflowserver.cpp include/workflow/workflowserver.h
+        src/idevice.cpp include/workflow/idevice.h
+        src/initevent.cpp src/initevent.h
+        src/exitevent.cpp src/exitevent.h
+        src/periodicevent.cpp src/periodicevent.h
+        src/cyclicevent.cpp src/cyclicevent.h src/initdirectorydata.cpp src/initdirectorydata.h src/template_names.icc src/scandirectorydata.cpp src/scandirectorydata.h src/sysloginput.cpp src/sysloginput.h)
 
 target_include_directories(workflow PUBLIC
         $<INSTALL_INTERFACE:include>

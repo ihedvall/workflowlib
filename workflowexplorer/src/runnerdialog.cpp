@@ -7,6 +7,8 @@
 #include "workflowexplorer.h"
 #include <wx/choice.h>
 #include <wx/valgen.h>
+#include <wx/combobox.h>
+#include "workflowexplorerid.h"
 
 namespace {
 
@@ -22,11 +24,23 @@ wxArrayString Types() {
   return temp;
 }
 
+wxArrayString Templates() {
+  const auto& app = workflow::gui::wxGetApp();
+  const auto& server = app.Server();
+  const auto& template_list = server.Templates();
+  wxArrayString temp;
+  for (const auto& itr : template_list) {
+    temp.Add(wxString::FromUTF8(itr.first));
+  }
+  return temp;
+}
+
 }
 
 namespace workflow::gui {
 
 wxBEGIN_EVENT_TABLE(RunnerDialog, wxDialog) //NOLINT
+    EVT_COMBOBOX(kIdRunnerName, RunnerDialog::OnNameChange)
 wxEND_EVENT_TABLE()
 
 RunnerDialog::RunnerDialog(wxWindow *parent, IRunner& runner)
@@ -35,8 +49,9 @@ RunnerDialog::RunnerDialog(wxWindow *parent, IRunner& runner)
       runner_(runner) {
 
   const auto new_runner = runner_.Name().empty();
-  auto *name = new wxTextCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition,
-                              wxDefaultSize, new_runner ? 0 : wxTE_READONLY,
+  auto *name = new wxComboBox(this, kIdRunnerName, name_, wxDefaultPosition,
+                              wxDefaultSize, Templates(),
+                              new_runner ? wxCB_DROPDOWN : wxCB_READONLY,
                               wxTextValidator(wxFILTER_EMPTY, &name_));
   name->SetMinSize({30 * 10, -1});
 
@@ -164,6 +179,18 @@ bool RunnerDialog::TransferDataFromWindow() {
   runner_.TypeAsString(type_.utf8_string());
   runner_.Arguments(arguments_.utf8_string());
   return true;
+}
+
+void RunnerDialog::OnNameChange(wxCommandEvent &event) {
+  const auto template_name = event.GetString().ToStdString();
+  auto& app = wxGetApp();
+  auto& server = app.Server();
+  auto* tmpl = server.GetTemplate(template_name);
+  // If previous name was empty, import the template properties as well
+  if (tmpl != nullptr && !template_name.empty()) {
+    runner_ = *tmpl;
+    TransferDataToWindow();
+  }
 }
 
 }  // namespace workflow::gui

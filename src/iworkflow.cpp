@@ -61,7 +61,7 @@ void IWorkflow::OnStart() {
 }
 
 void IWorkflow::AddRunner(const IRunner& runner) {
-  auto temp = std::make_unique<IRunner>(runner);
+  auto temp = IRunner::Create(runner);
   runner_list_.emplace_back(std::move(temp));
 }
 
@@ -161,6 +161,33 @@ void IWorkflow::MoveDown(const IRunner* runner) {
   auto temp = std::move(*next);
   *next = std::move(*itr);
   *itr = std::move(temp);
+}
+void IWorkflow::Init() {
+  // Attach the runner to the workflow, so it can access workflow data
+  for (const auto& itr : runner_list_) {
+    if (!itr) continue;
+    itr->AttachWorkflow(this);
+  }
+}
+
+void IWorkflow::Tick() {
+  for (const auto& itr : runner_list_) {
+    if (!itr) continue;
+    itr->Tick();
+  }
+}
+
+void IWorkflow::Exit() {
+  for (const auto& itr : runner_list_) {
+    if (!itr) continue;
+    itr->AttachWorkflow(nullptr);
+  }
+}
+
+void IWorkflow::ClearData(size_t index) {
+  if (index < data_list_.size()) {
+    data_list_[index].reset();
+  }
 }
 
 }  // namespace workflow

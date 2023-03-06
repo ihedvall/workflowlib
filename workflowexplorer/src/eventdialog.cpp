@@ -6,6 +6,7 @@
 #include "eventdialog.h"
 #include <wx/choice.h>
 #include <wx/valgen.h>
+#include <wx/valnum.h>
 
 namespace {
 
@@ -51,6 +52,13 @@ EventDialog::EventDialog(wxWindow *parent, IEvent& event)
                                  wxGenericValidator(&type_));
   type->SetMinSize({15 * 10, -1});
 
+  wxIntegerValidator<uint64_t> val(&period_, wxNUM_VAL_ZERO_AS_BLANK);
+  // val.SetRange(10, 3600'000);
+  auto *period = new wxTextCtrl(this, wxID_ANY, wxEmptyString,
+                              wxDefaultPosition, wxDefaultSize, 0,
+                              val);
+  period->SetMinSize({15 * 10, -1});
+
   auto *save_button_ = new wxButton(this, wxID_OK,
                                     wxGetStockLabel(wxID_SAVE,
                                                     wxSTOCK_FOR_BUTTON));
@@ -61,15 +69,18 @@ EventDialog::EventDialog(wxWindow *parent, IEvent& event)
   auto *name_label = new wxStaticText(this, wxID_ANY, L"Name:");
   auto *desc_label = new wxStaticText(this, wxID_ANY, L"Description:");
   auto *type_label = new wxStaticText(this, wxID_ANY, L"Type:");
+  auto *period_label = new wxStaticText(this, wxID_ANY, L"Period [ms]:");
 
   int label_width = 100;
   label_width = std::max(label_width, name_label->GetBestSize().GetX());
   label_width = std::max(label_width, desc_label->GetBestSize().GetX());
   label_width = std::max(label_width, type_label->GetBestSize().GetX());
+  label_width = std::max(label_width, period_label->GetBestSize().GetX());
 
   name_label->SetMinSize({label_width, -1});
   desc_label->SetMinSize({label_width, -1});
   type_label->SetMinSize({label_width, -1});
+  period_label->SetMinSize({label_width, -1});
 
   auto *name_sizer = new wxBoxSizer(wxHORIZONTAL);
   name_sizer->Add(name_label, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 5);
@@ -83,6 +94,10 @@ EventDialog::EventDialog(wxWindow *parent, IEvent& event)
   type_sizer->Add(type_label, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 5);
   type_sizer->Add(type, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 5);
 
+  auto *period_sizer = new wxBoxSizer(wxHORIZONTAL);
+  period_sizer->Add(period_label, 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 5);
+  period_sizer->Add(period, 0, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, 5);
+
   auto *system_sizer = new wxStdDialogButtonSizer();
   system_sizer->AddButton(save_button_);
   system_sizer->AddButton(cancel_button_);
@@ -93,6 +108,7 @@ EventDialog::EventDialog(wxWindow *parent, IEvent& event)
   cfg_box->Add(name_sizer, 0, wxALIGN_LEFT | wxALL, 1);
   cfg_box->Add(desc_sizer, 0, wxALIGN_LEFT | wxALL, 1);
   cfg_box->Add(type_sizer, 0, wxALIGN_LEFT | wxALL, 1);
+  cfg_box->Add(period_sizer, 0, wxALIGN_LEFT | wxALL, 1);
 
   auto *main_sizer = new wxBoxSizer(wxVERTICAL);
   main_sizer->Add(cfg_box, 0, wxALIGN_LEFT | wxALL | wxEXPAND, 4);
@@ -112,6 +128,8 @@ bool EventDialog::TransferDataToWindow() {
   name_ = wxString::FromUTF8(event_.Name());
   description_ = wxString::FromUTF8(event_.Description());
   type_ = wxString::FromUTF8(event_.EventTypeAsString());
+  period_ = event_.Period();
+
   return wxWindowBase::TransferDataToWindow();
 }
 
@@ -127,6 +145,8 @@ bool EventDialog::TransferDataFromWindow() {
   event_.Name(name_.utf8_string());
   event_.Description(description_.utf8_string());
   event_.EventTypeAsString(type_.utf8_string());
+  event_.Period(period_);
+
   return true;
 }
 

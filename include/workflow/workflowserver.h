@@ -5,16 +5,21 @@
 
 #pragma once
 #include <memory>
+#include <vector>
+#include <map>
 #include <string>
 #include "workflow/parametercontainer.h"
 #include "workflow/eventengine.h"
 #include "workflow/iworkflow.h"
+#include "workflow/irunner.h"
 #include <util/ixmlnode.h>
+#include <util/stringutil.h>
 
 namespace workflow {
 
 using WorkflowList = std::vector<std::unique_ptr<IWorkflow>>;
-
+using TemplateList = std::map<std::string, std::unique_ptr<IRunner>,
+    util::string::IgnoreCase>;
 class WorkflowServer {
  public:
   WorkflowServer();
@@ -44,8 +49,16 @@ class WorkflowServer {
   void DeleteWorkflow(const IWorkflow* workflow);
   [[nodiscard]] const IWorkflow* GetWorkflow(const std::string& name) const;
   [[nodiscard]] IWorkflow* GetWorkflow(const std::string& name);
+
   void MoveUp(const IWorkflow* workflow);
   void MoveDown(const IWorkflow* workflow);
+
+  [[nodiscard]] TemplateList& Templates() {return template_list_;}
+  [[nodiscard]] const TemplateList& Templates() const {return template_list_;}
+  void AddTemplate(const IRunner& temp);
+  void DeleteTemplate(const IRunner* temp);
+  [[nodiscard]] const IRunner* GetTemplate(const std::string& name) const;
+  [[nodiscard]] IRunner* GetTemplate(const std::string& name);
 
   virtual void Init();
   virtual void Tick();
@@ -61,6 +74,7 @@ class WorkflowServer {
   std::unique_ptr<ParameterContainer> parameter_container_;
   std::unique_ptr<EventEngine> event_engine_;
   WorkflowList workflow_list_;
+  TemplateList template_list_;
 };
 
 }  // namespace workflow

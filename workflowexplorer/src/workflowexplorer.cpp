@@ -190,6 +190,7 @@ bool WorkflowExplorer::ReadConfigFile() {
     path filename(config_file_);
     if (!exists(filename)) {
       LOG_DEBUG() << "Config file doesn't exists. File: " << config_file_;
+      config_file_.clear();
       return true;
     }
     auto xml_file = CreateXmlFile("Expat");
@@ -197,17 +198,20 @@ bool WorkflowExplorer::ReadConfigFile() {
     const auto parse = xml_file->ParseFile();
     if (!parse) {
       LOG_DEBUG() << "Failed to parse the XML file. File: " << config_file_;
+      config_file_.clear();
       return false;
     }
     const auto* root = xml_file->RootNode();
     if (root == nullptr) {
       LOG_DEBUG() << "No root node in XML file. File: " << config_file_;
+      config_file_.clear();
       return false;
     }
     server_.ReadXml(*root);
     original_ = server_;
   } catch (const std::exception& err) {
     LOG_DEBUG() << "File system error. Error: " << err.what();
+    config_file_.clear();
     return false;
   }
   return true;
@@ -232,6 +236,7 @@ void WorkflowExplorer::OnSaveFile(wxCommandEvent& event) {
     msg << config_file_ << std::endl;
     wxMessageBox(msg.str(), "Fail to Save Config File",
                  wxCENTRE | wxICON_ERROR,GetTopWindow());
+    config_file_.clear();
   }
 }
 
@@ -244,17 +249,27 @@ bool WorkflowExplorer::SaveConfigFile() {
 
   try {
     path filename(config_file_);
-    if (!exists(filename)) {
-      LOG_DEBUG() << "Config file doesn't exists. File: " << config_file_;
-      return false;
+
+    // Check that parent dir exists. If not create the directory.
+    const auto parent_dir = filename.parent_path();
+    if (!exists(parent_dir)) {
+      create_directories(parent_dir);
     }
+
     auto xml_file = CreateXmlFile("Expat");
     xml_file->FileName(config_file_);
-    const auto parse = xml_file->ParseFile();
-    if (!parse) {
-      LOG_DEBUG() << "Failed to parse the XML file. File: " << config_file_;
-      return false;
+
+    // Insert the root tag if file doesn't exist else parse existing file
+    if (!exists(filename)) {
+      xml_file->RootName("WorkflowExplorer");
+    } else {
+      const auto parse = xml_file->ParseFile();
+      if (!parse) {
+        LOG_DEBUG() << "Failed to parse the XML file. File: " << config_file_;
+        return false;
+      }
     }
+
     auto* root = xml_file->RootNode();
     if (root == nullptr) {
       LOG_DEBUG() << "No root node in XML file. File: " << config_file_;
@@ -338,6 +353,7 @@ void WorkflowExplorer::OnSaveAsFile(wxCommandEvent &event) {
     msg << config_file_ << std::endl;
     wxMessageBox(msg.str(), "Fail to Read Config File",
                  wxCENTRE | wxICON_ERROR,window);
+    config_file_.clear();
   } else {
     temp_file = config_file_.c_str();
     app_config->Write("/General/ConfigFile",temp_file);

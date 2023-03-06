@@ -16,7 +16,7 @@ using EventList = std::map<std::string, std::unique_ptr<IEvent>,
 
 class EventEngine {
  public:
-  EventEngine() = default;
+  EventEngine();
   virtual ~EventEngine();
 
   EventEngine(const EventEngine& engine);
@@ -37,10 +37,17 @@ class EventEngine {
   virtual void SaveXml(util::xml::IXmlNode& root) const;
   virtual void ReadXml(const util::xml::IXmlNode& root);
   void Clear();
+
+
+  void DetachWorkflows();
  protected:
+
+  [[nodiscard]] virtual std::unique_ptr<IEvent> MakeEvent(const IEvent&
+                                                                source);
   bool initialized_ = false;
  private:
   EventList event_list_;
+  void AddDefaultEvents();
 };
 
 }  // namespace workflow

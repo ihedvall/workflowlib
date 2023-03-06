@@ -39,5 +39,12 @@ constexpr wxWindowID kIdRenameRunner = 43;
 constexpr wxWindowID kIdDeleteRunner = 44;
 constexpr wxWindowID kIdUpRunner = 45;
 constexpr wxWindowID kIdDownRunner = 46;
+constexpr wxWindowID kIdRunnerName = 47;
 
+constexpr wxWindowID kIdNewTemplate = 50;
+constexpr wxWindowID kIdEditTemplate = 51;
+constexpr wxWindowID kIdCopyTemplate = 52;
+constexpr wxWindowID kIdRenameTemplate = 53;
+constexpr wxWindowID kIdDeleteTemplate = 54;
+constexpr wxWindowID kIdTemplateList = 55;
 };

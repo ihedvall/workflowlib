@@ -7,11 +7,11 @@ project(TestWorkflow
         LANGUAGES CXX)
 
 add_executable(test_workflow
-        test_parameter.cpp test_parameter_container.cpp)
+        test_parameter.cpp test_parameter_container.cpp test_event.cpp test_runner.cpp)
 
 target_include_directories(test_workflow PRIVATE
-        ../include
-        ../src
+        ${CMAKE_CURRENT_SOURCE_DIR}/../include
+        ${CMAKE_CURRENT_SOURCE_DIR}/../src
         ${utillib_SOURCE_DIR}/include
         ${GTEST_INCLUDE_DIRS}
         ${Boost_INCLUDE_DIRS})
@@ -27,6 +27,7 @@ target_link_libraries(test_workflow PRIVATE util)
 target_link_libraries(test_workflow PRIVATE expat)
 target_link_libraries(test_workflow PRIVATE ${Boost_LIBRARIES})
 target_link_libraries(test_workflow PRIVATE ${GTEST_BOTH_LIBRARIES})
+target_link_libraries(test_workflow PRIVATE GTest::gmock GTest::gmock_main)
 
 if (WIN32)
     #target_link_libraries(test_mdf PRIVATE iconv)

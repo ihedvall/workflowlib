@@ -5,13 +5,11 @@
 
 #include "workflow/ievent.h"
 #include <util/stringutil.h>
+#include "workflow/iworkflow.h"
 
 using namespace util::xml;
 
 namespace workflow {
-
-IEvent::IEvent() {
-}
 
 IEvent::~IEvent() {
   runner_.reset();
@@ -21,7 +19,8 @@ IEvent::IEvent(const IEvent& event)
 :  name_(event.name_),
    description_(event.description_),
    type_(event.type_),
-   parameter_(event.parameter_)
+   parameter_(event.parameter_),
+   period_(event.period_)
 {
   if (event.runner_) {
     runner_ = std::make_unique<IRunner>(*event.runner_);
@@ -33,6 +32,7 @@ bool IEvent::operator==(const IEvent& event) const {
   if (description_ != event.description_) return false;
   if (type_ != event.type_) return false;
   if (parameter_ != event.parameter_) return false;
+  if (period_ != event.period_) return false;
   return true;
 }
 
@@ -81,6 +81,7 @@ void IEvent::SaveXml(IXmlNode& root) const {
   event_root.SetProperty("Description", description_);
   event_root.SetProperty("Type", EventTypeAsString());
   event_root.SetProperty("Parameter", parameter_);
+  event_root.SetProperty("Period", period_);
 }
 
 void IEvent::ReadXml(const IXmlNode& root) {
@@ -88,10 +89,30 @@ void IEvent::ReadXml(const IXmlNode& root) {
   description_ = root.Property<std::string>("Description");
   EventTypeAsString( root.Property<std::string>("Type"));
   parameter_ = root.Property<std::string>("Parameter");
+  period_ = root.Property<uint64_t>("Period", 1000);
 }
 
-void IEvent::Init() {};
-void IEvent::Tick() {};
-void IEvent::Exit() {};
+void IEvent::Init() {}
+
+void IEvent::Tick() {
+  for (auto* workflow : workflow_list_) {
+    if (workflow != nullptr) {
+      workflow->Tick();
+    }
+  }
+};
+
+void IEvent::Exit() {
+}
+
+void IEvent::AttachWorkflow(IWorkflow* workflow){
+  if (workflow != nullptr) {
+    workflow_list_.emplace_back(workflow);
+  }
+}
+
+void IEvent::DetachWorkflows() {
+  workflow_list_.clear();
+}
 
 }  // namespace workflow

@@ -38,6 +38,10 @@ WorkflowServer::WorkflowServer(const WorkflowServer& server)
     auto temp = std::make_unique<IWorkflow>(*workflow);
     workflow_list_.push_back(std::move(temp));
   }
+  for (const auto& tmpl : server.template_list_) {
+    if (!tmpl.second) continue;
+    AddTemplate(*tmpl.second);
+  }
 }
 
 WorkflowServer& WorkflowServer::operator=(const WorkflowServer& server) {
@@ -68,6 +72,11 @@ WorkflowServer& WorkflowServer::operator=(const WorkflowServer& server) {
     workflow_list_.push_back(std::move(temp));
   }
 
+  template_list_.clear();
+  for (const auto& tmpl : server.template_list_) {
+    if (!tmpl.second) continue;
+    AddTemplate(*tmpl.second);
+  }
   return *this;
 }
 
@@ -91,13 +100,25 @@ bool WorkflowServer::operator==(const WorkflowServer& server) const {
     }
   }
 
-  const auto& workflow_equal = std::ranges::equal(
+  const auto workflow_equal = std::ranges::equal(
       workflow_list_, server.workflow_list_,
       [] (const auto& workflow1, const auto& workflow2) {
         if (!workflow1 && !workflow2) return true;
-        return workflow1 && workflow2 && (*workflow1 == *workflow2); });
+        return workflow1 && workflow2 && (*workflow1 == *workflow2);
+      });
+  if (!workflow_equal) {
+    return false;
+  }
 
-  return workflow_equal;
+  const auto template_equal = std::ranges::equal(
+      template_list_, server.template_list_,
+      [] (const auto& runner1, const auto& runner2) {
+        if (!runner1.second && !runner2.second) return true;
+        return runner1.second && runner2.second &&
+               (*runner1.second == *runner2.second);
+      });
+
+  return template_equal;
 }
 
 void WorkflowServer::SetParameterContainer(
@@ -128,7 +149,14 @@ const EventEngine* WorkflowServer::GetEventEngine() const {
 
 void WorkflowServer::AddWorkflow(const IWorkflow& workflow) {
   auto temp = std::make_unique<IWorkflow>(workflow);
-  workflow_list_.push_back(std::move(temp));
+  auto itr = std::ranges::find_if(workflow_list_, [&] (const auto& item) {
+     return item && util::string::IEquals(item->Name(), workflow.Name());
+  });
+  if (itr == workflow_list_.end()) {
+    workflow_list_.emplace_back(std::move(temp));
+  } else {
+    *itr = std::move(temp);
+  }
 }
 
 void WorkflowServer::DeleteWorkflow(const IWorkflow* workflow) {
@@ -154,10 +182,55 @@ IWorkflow* WorkflowServer::GetWorkflow(const std::string& name) {
   return itr != workflow_list_.end() ? itr->get() : nullptr;
 }
 
+void WorkflowServer::AddTemplate(const IRunner& temp) {
+  auto runner = IRunner::Create(temp);
+  auto itr = template_list_.find(temp.Name());
+  if (itr == template_list_.end()) {
+    template_list_.emplace(runner->Name(), std::move(runner));
+  } else {
+    itr->second = std::move(runner);
+  }
+}
+
+void WorkflowServer::DeleteTemplate(const IRunner* temp) {
+  auto itr = std::ranges::find_if(template_list_, [&] (const auto& item) {
+    return item.second.get() == temp;
+  });
+  if (itr != template_list_.end()) {
+    template_list_.erase(itr);
+  }
+}
+
+const IRunner* WorkflowServer::GetTemplate(const std::string& name) const {
+  const auto itr = std::ranges::find_if(template_list_, [&] (const auto& item) {
+    return item.second && IEquals(name, item.second->Name()); });
+  return itr != template_list_.cend() ? itr->second.get() : nullptr;
+}
+
+IRunner* WorkflowServer::GetTemplate(const std::string& name) {
+  auto itr = std::ranges::find_if(template_list_, [&] (const auto& item) {
+    return item.second && IEquals(name, item.second->Name()); });
+  return itr != template_list_.end() ? itr->second.get() : nullptr;
+}
+
 void WorkflowServer::Init() {
+  // Associate the event with its workflow
+  for (auto& workflow : workflow_list_) {
+    if (!workflow) {
+      continue;
+    }
+    const auto& event_name = workflow->StartEvent();
+    auto* event = event_engine_->GetEvent(event_name);
+    if (event == nullptr) {
+      continue;
+    }
+    event->AttachWorkflow(workflow.get());
+  }
+
   if (parameter_container_) {
     parameter_container_->Init();
   }
+
   if (event_engine_) {
     event_engine_->Init();
   }
@@ -179,7 +252,9 @@ void WorkflowServer::Exit() {
 
   if (event_engine_) {
     event_engine_->Exit();
+    event_engine_->DetachWorkflows();
   }
+
 }
 
 void WorkflowServer::SaveXml(IXmlNode& root) const {
@@ -202,10 +277,21 @@ void WorkflowServer::SaveXml(IXmlNode& root) const {
     event_engine_->SaveXml(engine_root);
   }
 
-  auto& workflow_root = engine_root.AddNode("WorkflowList");
-  for (const auto& workflow : workflow_list_) {
-    workflow->SaveXml(workflow_root);
+  if (!workflow_list_.empty()) {
+    auto& workflow_root = engine_root.AddNode("WorkflowList");
+    for (const auto& workflow : workflow_list_) {
+      if (!workflow) continue;
+      workflow->SaveXml(workflow_root);
+    }
   }
+  if (!template_list_.empty()) {
+    auto& template_root = engine_root.AddNode("TemplateList");
+    for (const auto& runner : template_list_) {
+      if (!runner.second) continue;
+      runner.second->SaveXml(template_root);
+    }
+  }
+
 }
 
 void WorkflowServer::ReadXml(const IXmlNode& root) {
@@ -237,6 +323,21 @@ void WorkflowServer::ReadXml(const IXmlNode& root) {
       workflow_list_.emplace_back(std::move(flow));
     }
   }
+
+  template_list_.clear();
+  const auto* template_root = engine_root->GetNode("TemplateList");
+  if (template_root != nullptr) {
+    IXmlNode::ChildList list;
+    template_root->GetChildList(list);
+    for (const auto* item : list) {
+      if (item == nullptr || !item->IsTagName("Runner")) {
+        continue;
+      }
+      auto runner = std::make_unique<IRunner>();
+      runner->ReadXml(*item);
+      template_list_.emplace(runner->Name(), std::move(runner));
+    }
+  }
 }
 
 void WorkflowServer::Clear() {
@@ -249,6 +350,7 @@ void WorkflowServer::Clear() {
     event_engine_->Clear();
   }
   workflow_list_.clear();
+  template_list_.clear();
 }
 
 void WorkflowServer::MoveUp(const IWorkflow* workflow) {

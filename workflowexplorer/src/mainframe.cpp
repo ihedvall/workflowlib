@@ -13,6 +13,7 @@
 #include "workflowpanel.h"
 #include "eventpanel.h"
 #include "parameterpanel.h"
+#include "templatepanel.h"
 #include "workflowexplorer.h"
 #include "workflowexplorerid.h"
 
@@ -22,6 +23,7 @@ constexpr int kPageWorkflow = 0;
 constexpr int kPageEvent = 1;
 constexpr int kPageDevice = 2;
 constexpr int kPageParameter = 3;
+constexpr int kPageTemplate = 4;
 
 constexpr int kBmpWorkflowHot = 0;
 constexpr int kBmpWorkflowDisabled = 1;
@@ -31,6 +33,8 @@ constexpr int kBmpDeviceHot = 4;
 constexpr int kBmpDeviceDisabled = 5;
 constexpr int kBmpParameterHot = 6;
 constexpr int kBmpParameterDisabled = 7;
+constexpr int kBmpTemplateHot = 8;
+constexpr int kBmpTemplateDisabled = 9;
 
 }
 
@@ -85,13 +89,24 @@ wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
   EVT_UPDATE_UI(kIdDeleteEvent, MainFrame::OnUpdateEvent)
   EVT_MENU(kIdDeleteEvent, MainFrame::OnEvent)
 
+  EVT_UPDATE_UI(kIdNewTemplate, MainFrame::OnUpdateTemplate)
+  EVT_MENU(kIdNewTemplate, MainFrame::OnTemplate)
+  EVT_UPDATE_UI(kIdEditTemplate, MainFrame::OnUpdateTemplate)
+  EVT_MENU(kIdEditTemplate, MainFrame::OnTemplate)
+  EVT_UPDATE_UI(kIdCopyTemplate, MainFrame::OnUpdateTemplate)
+  EVT_MENU(kIdCopyTemplate, MainFrame::OnTemplate)
+  EVT_UPDATE_UI(kIdRenameTemplate, MainFrame::OnUpdateTemplate)
+  EVT_MENU(kIdRenameTemplate, MainFrame::OnTemplate)
+  EVT_UPDATE_UI(kIdDeleteTemplate, MainFrame::OnUpdateTemplate)
+  EVT_MENU(kIdDeleteTemplate, MainFrame::OnTemplate)
+
   EVT_UPDATE_UI(kIdNewParameter, MainFrame::OnUpdateParameter)
   EVT_MENU(kIdNewParameter, MainFrame::OnParameter)
 wxEND_EVENT_TABLE()
 
 MainFrame::MainFrame(const wxString& title, const wxPoint& start_pos, const wxSize& start_size, bool maximized)
     : wxFrame(nullptr, wxID_ANY, title, start_pos, start_size),
-    image_list_(32,32,false,8) {
+    image_list_(32,32,false,10) {
   wxTopLevelWindowMSW::Maximize(maximized);
   SetIcon(wxIcon("APP_ICON", wxBITMAP_TYPE_ICO_RESOURCE));
   image_list_.Add(wxBitmap("NOTEBOOK_LIST", wxBITMAP_TYPE_BMP_RESOURCE));
@@ -114,15 +129,15 @@ MainFrame::MainFrame(const wxString& title, const wxPoint& start_pos, const wxSi
   menu_workflow->Append(kIdRenameWorkflow, wxString("Rename"));
   menu_workflow->Append(kIdDeleteWorkflow, wxGetStockLabel(wxID_DELETE));
 
-  auto *menu_runner = new wxMenu;
-  menu_runner->Append(kIdUpRunner, wxGetStockLabel(wxID_UP));
-  menu_runner->Append(kIdDownRunner, wxGetStockLabel(wxID_DOWN));
-  menu_runner->AppendSeparator();
-  menu_runner->Append(kIdNewRunner, wxGetStockLabel(wxID_NEW));
-  menu_runner->Append(kIdEditRunner, wxGetStockLabel(wxID_EDIT));
-  menu_runner->Append(kIdCopyRunner, wxGetStockLabel(wxID_COPY));
-  menu_runner->Append(kIdRenameRunner, wxString("Rename"));
-  menu_runner->Append(kIdDeleteRunner, wxGetStockLabel(wxID_DELETE));
+  auto *menu_task = new wxMenu;
+  menu_task->Append(kIdUpRunner, wxGetStockLabel(wxID_UP));
+  menu_task->Append(kIdDownRunner, wxGetStockLabel(wxID_DOWN));
+  menu_task->AppendSeparator();
+  menu_task->Append(kIdNewRunner, wxGetStockLabel(wxID_NEW));
+  menu_task->Append(kIdEditRunner, wxGetStockLabel(wxID_EDIT));
+  menu_task->Append(kIdCopyRunner, wxGetStockLabel(wxID_COPY));
+  menu_task->Append(kIdRenameRunner, wxString("Rename"));
+  menu_task->Append(kIdDeleteRunner, wxGetStockLabel(wxID_DELETE));
 
   auto *menu_event = new wxMenu;
   menu_event->Append(kIdNewEvent, wxGetStockLabel(wxID_NEW));
@@ -137,6 +152,13 @@ MainFrame::MainFrame(const wxString& title, const wxPoint& start_pos, const wxSi
   menu_parameter->Append(kIdEditParameter, wxGetStockLabel(wxID_EDIT));
   menu_parameter->Append(kIdDeleteParameter, wxGetStockLabel(wxID_DELETE));
 
+  auto *menu_template = new wxMenu;
+  menu_template->Append(kIdNewTemplate, wxGetStockLabel(wxID_NEW));
+  menu_template->Append(kIdEditTemplate, wxGetStockLabel(wxID_EDIT));
+  menu_template->Append(kIdCopyTemplate, wxGetStockLabel(wxID_COPY));
+  menu_template->Append(kIdRenameTemplate, wxString("Rename"));
+  menu_template->Append(kIdDeleteTemplate, wxGetStockLabel(wxID_DELETE));
+
   // ABOUT
   auto *menu_about = new wxMenu;
   menu_about->Append(kIdOpenLogFile, L"Open Log File");
@@ -146,9 +168,10 @@ MainFrame::MainFrame(const wxString& title, const wxPoint& start_pos, const wxSi
   auto *menu_bar = new wxMenuBar;
   menu_bar->Append(menu_file, wxGetStockLabel(wxID_FILE));
   menu_bar->Append(menu_workflow, L"Workflow");
-  menu_bar->Append(menu_runner, L"Task");
+  menu_bar->Append(menu_task, L"Task");
   menu_bar->Append(menu_event, L"Event");
   menu_bar->Append(menu_parameter, L"Parameter");
+  menu_bar->Append(menu_template, L"Template Task");
   menu_bar->Append(menu_about, wxGetStockLabel(wxID_HELP));
   wxFrameBase::SetMenuBar(menu_bar);
 
@@ -159,6 +182,7 @@ MainFrame::MainFrame(const wxString& title, const wxPoint& start_pos, const wxSi
   auto* event_tab = new EventPanel(notebook_);
   auto* device_tab = new ParameterPanel(notebook_);
   auto* parameter_tab = new ParameterPanel(notebook_);
+  auto* template_tab = new TemplatePanel(notebook_);
 
   notebook_->InsertPage(kPageWorkflow, workflow_tab, L"Workflows",
                         false, kBmpWorkflowDisabled);
@@ -168,6 +192,8 @@ MainFrame::MainFrame(const wxString& title, const wxPoint& start_pos, const wxSi
                         false, kBmpDeviceDisabled);
   notebook_->InsertPage(kPageParameter, parameter_tab, L"Parameters",
                         false, kBmpParameterDisabled);
+  notebook_->InsertPage(kPageTemplate, template_tab, L"Template Tasks",
+                        false, kBmpTemplateDisabled);
 
   auto* main_sizer = new wxBoxSizer(wxVERTICAL);
   main_sizer->Add(notebook_, 1, wxALIGN_LEFT | wxALL | wxEXPAND, 0);
@@ -180,30 +206,40 @@ MainFrame::MainFrame(const wxString& title, const wxPoint& start_pos, const wxSi
 void MainFrame::OnClose(wxCloseEvent &event) {
   auto& app = wxGetApp();
   if ( event.CanVeto() && app.IsModified() ) {
-    std::ostringstream ask;
-    ask << "The configuration file has not been saved." << std::endl;
-    ask << "File: " << app.ConfigName() << std::endl;
-    ask << "Dou you want save it before closing?";
-    wxMessageDialog dialog(this, wxString::FromUTF8(ask.str()),
-                           "Save Config File",
-                           wxYES_NO | wxCANCEL | wxYES_DEFAULT | wxCENTRE);
-    dialog.SetYesNoCancelLabels(wxID_SAVE, wxID_CLOSE, wxID_CANCEL);
-
-    const auto reply = dialog.ShowModal();
-    switch (reply) {
-      case wxID_YES:
-        app.SaveConfigFile();
-        break;
-
-      case wxID_NO:
-        break;
-
-      case wxID_CANCEL:
-      default:
+    // Call Save As if no file is selected yet
+    if (app.ConfigName().empty()) {
+      wxCommandEvent dummy_event;
+      app.OnSaveAsFile(dummy_event);
+      if (app.ConfigName().empty()) {
         event.Veto();
         return;
-    }
+      }
+    } else {
+      // As if file should be saved.
+      std::ostringstream ask;
+      ask << "The configuration file has not been saved." << std::endl;
+      ask << "File: " << app.ConfigName() << std::endl;
+      ask << "Dou you want save it before closing?";
+      wxMessageDialog dialog(this, wxString::FromUTF8(ask.str()),
+                             "Save Config File",
+                             wxYES_NO | wxCANCEL | wxYES_DEFAULT | wxCENTRE);
+      dialog.SetYesNoCancelLabels(wxID_SAVE, wxID_CLOSE, wxID_CANCEL);
 
+      const auto reply = dialog.ShowModal();
+      switch (reply) {
+        case wxID_YES:
+          app.SaveConfigFile();
+          break;
+
+        case wxID_NO:
+          break;
+
+        case wxID_CANCEL:
+        default:
+          event.Veto();
+          return;
+      }
+    }
   }
   // If the window is minimized. Do not save as last position
 
@@ -281,6 +317,10 @@ void MainFrame::OnPageChange(wxBookCtrlEvent &event) {
       notebook_->SetPageImage(kPageParameter, kBmpParameterDisabled);
       break;
 
+    case kPageTemplate:
+      notebook_->SetPageImage(kPageTemplate, kBmpTemplateDisabled);
+      break;
+
     default:
       break;
   }
@@ -302,6 +342,10 @@ void MainFrame::OnPageChange(wxBookCtrlEvent &event) {
     case kPageParameter:
       notebook_->SetPageImage(kPageParameter, kBmpParameterHot);
       break;
+
+    case kPageTemplate:
+       notebook_->SetPageImage(kPageTemplate, kBmpTemplateHot);
+       break;
 
     default:
       break;
@@ -338,7 +382,12 @@ void MainFrame::Update() {
 
 void MainFrame::OnUpdateWorkflow(wxUpdateUIEvent& event) {
   auto* panel = notebook_ ? notebook_->GetCurrentPage() : nullptr;
-  if (panel != nullptr && notebook_->GetSelection() == kPageWorkflow) {
+  if (panel == nullptr) {
+    event.Enable(false);
+    return;
+  }
+
+  if (notebook_->GetSelection() == kPageWorkflow) {
     panel->ProcessWindowEventLocally(event);
   } else {
     event.Enable(false);
@@ -354,7 +403,11 @@ void MainFrame::OnWorkflow(wxCommandEvent& event) {
 
 void MainFrame::OnUpdateEvent(wxUpdateUIEvent& event) {
   auto* panel = notebook_ ? notebook_->GetCurrentPage() : nullptr;
-  if (panel != nullptr && notebook_->GetSelection() == kPageEvent) {
+  if (panel == nullptr) {
+    event.Enable(false);
+    return;
+  }
+  if (notebook_->GetSelection() == kPageEvent) {
     panel->ProcessWindowEventLocally(event);
   } else {
     event.Enable(false);
@@ -370,7 +423,11 @@ void MainFrame::OnEvent(wxCommandEvent& event) {
 
 void MainFrame::OnUpdateParameter(wxUpdateUIEvent& event) {
   auto* panel = notebook_ ? notebook_->GetCurrentPage() : nullptr;
-  if (panel != nullptr && notebook_->GetSelection() == kPageParameter) {
+  if (panel == nullptr) {
+    event.Enable(false);
+    return;
+  }
+  if (notebook_->GetSelection() == kPageParameter) {
     panel->ProcessWindowEventLocally(event);
   } else {
     event.Enable(false);
@@ -380,6 +437,26 @@ void MainFrame::OnUpdateParameter(wxUpdateUIEvent& event) {
 void MainFrame::OnParameter(wxCommandEvent& event) {
   auto* panel = notebook_ ? notebook_->GetCurrentPage() : nullptr;
   if (panel != nullptr && notebook_->GetSelection() == kPageParameter) {
+    panel->ProcessWindowEventLocally(event);
+  }
+}
+
+void MainFrame::OnUpdateTemplate(wxUpdateUIEvent& event) {
+  auto* panel = notebook_ ? notebook_->GetCurrentPage() : nullptr;
+  if (panel == nullptr) {
+    event.Enable(false);
+    return;
+  }
+  if (notebook_->GetSelection() == kPageTemplate) {
+    panel->ProcessWindowEventLocally(event);
+  } else {
+    event.Enable(false);
+  }
+}
+
+void MainFrame::OnTemplate(wxCommandEvent& event) {
+  auto* panel = notebook_ ? notebook_->GetCurrentPage() : nullptr;
+  if (panel != nullptr && notebook_->GetSelection() == kPageTemplate) {
     panel->ProcessWindowEventLocally(event);
   }
 }
