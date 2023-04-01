@@ -68,6 +68,10 @@ class WorkflowServer {
   virtual void SaveXml(util::xml::IXmlNode& root) const;
 
   void Clear();
+
+  [[nodiscard]] virtual std::unique_ptr<IRunner> CreateRunner(
+      const IRunner& source);
+  virtual void CreateDefaultTemplates();
  private:
   std::string name_;
   std::string description_;

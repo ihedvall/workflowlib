@@ -34,7 +34,11 @@ add_library(workflow STATIC
         src/initevent.cpp src/initevent.h
         src/exitevent.cpp src/exitevent.h
         src/periodicevent.cpp src/periodicevent.h
-        src/cyclicevent.cpp src/cyclicevent.h src/initdirectorydata.cpp src/initdirectorydata.h src/template_names.icc src/scandirectorydata.cpp src/scandirectorydata.h src/sysloginput.cpp src/sysloginput.h)
+        src/cyclicevent.cpp src/cyclicevent.h
+        src/initdirectorydata.cpp src/initdirectorydata.h
+        src/template_names.icc
+        src/scandirectorydata.cpp src/scandirectorydata.h
+        src/sysloginput.cpp src/sysloginput.h)
 
 target_include_directories(workflow PUBLIC
         $<INSTALL_INTERFACE:include>

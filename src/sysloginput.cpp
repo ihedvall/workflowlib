@@ -7,11 +7,15 @@
 #include <boost/program_options.hpp>
 #include <vector>
 #include <util/syslogmessage.h>
+#include <util/stringutil.h>
+#include <util/utilfactory.h>
 #include "workflow/iworkflow.h"
 
 #include "template_names.icc"
 
 using namespace boost::program_options;
+using namespace util::string;
+using namespace util::syslog;
 using SyslogList = std::vector<util::syslog::SyslogMessage>;
 
 namespace workflow {
@@ -19,21 +23,38 @@ SyslogInput::SyslogInput() {
   Name(kSyslogInput.data());
   Template(kSyslogInput.data());
   Description("Server that receives syslog messages");
-  server_.Name(Name());
+  std::ostringstream temp;
+  temp << "--slot=" << data_slot_ << " ";
+  temp << "--address=" << address_ << " ";
+  temp << "--port=" << port_ << " ";
+  temp << "--type=" << type_ << " ";
+
+  Arguments(temp.str());
 }
 
 SyslogInput::SyslogInput(const IRunner& source)
     : IRunner(source) {
   Template(kSyslogInput.data());
   ParseArguments();
-  server_.Name(Name());
 }
 
 void SyslogInput::Init() {
   IRunner::Init();
   ParseArguments();
-  server_.Name(Name());
-  server_.Start();
+  if (IEquals(type_, "TCP")) {
+    auto temp = util::UtilFactory::CreateSyslogServer(
+        SyslogServerType::TcpServer);
+    server_ = std::move(temp);
+  } else {
+    auto temp = util::UtilFactory::CreateSyslogServer(
+        SyslogServerType::UdpServer);
+    server_ = std::move(temp);
+  }
+
+  server_->Name(Name());
+  server_->Port(port_);
+  server_->Address(address_);
+  server_->Start();
   auto* workflow = GetWorkflow();
   if (workflow != nullptr) {
     workflow->InitData<SyslogList>(data_slot_, nullptr);
@@ -50,13 +71,13 @@ void SyslogInput::Tick() {
   auto* syslog_list = workflow != nullptr ?
                           workflow->GetData<SyslogList>(data_slot_) :
                           nullptr;
-  if (syslog_list == nullptr) {
+  if (syslog_list == nullptr || !server_) {
     LastError("No syslog list found");
     IsOk(false);
     return;
   }
   syslog_list->clear();
-  for (auto msg = server_.GetMsg(false); msg; msg = server_.GetMsg(false)) {
+  for (auto msg = server_->GetMsg(false); msg; msg = server_->GetMsg(false)) {
     // Insert message into the database
     syslog_list->emplace_back(*msg);
     msg.reset();
@@ -64,7 +85,9 @@ void SyslogInput::Tick() {
 }
 
 void SyslogInput::Exit() {
-  server_.Stop();
+  if (server_) {
+    server_->Stop();
+  }
   auto* workflow = GetWorkflow();
   if (workflow != nullptr) {
     workflow->ClearData(data_slot_);

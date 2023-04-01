@@ -317,15 +317,16 @@ void WorkflowPanel::OnNewWorkflow(wxCommandEvent&) {
     return;
   }
 
-  IWorkflow workflow;
+  auto& app = wxGetApp();
+  auto& server = app.Server();
+
+  IWorkflow workflow(&server);
   WorkflowDialog dialog(this, workflow);
   const auto ret = dialog.ShowModal();
   if (ret != wxID_OK) {
     return;
   }
   const auto& name = workflow.Name();
-  auto& app = wxGetApp();
-  auto& server = app.Server();
   const auto exist = server.GetWorkflow(name) != nullptr;
   if (exist) {
     std::ostringstream msg;

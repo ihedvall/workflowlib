@@ -19,9 +19,11 @@
 namespace workflow {
 using RunnerList = std::vector<std::unique_ptr<IRunner>>;
 
+class WorkflowServer;
+
 class IWorkflow {
  public:
-  IWorkflow() = default;
+  explicit IWorkflow( WorkflowServer* server);
   virtual ~IWorkflow() = default;
   IWorkflow(const IWorkflow& workflow);
   IWorkflow& operator = (const IWorkflow& workflow);
@@ -65,14 +67,16 @@ class IWorkflow {
   bool InitData(size_t index, const T* value);
 
   void ClearData(size_t index);
+
  protected:
   std::atomic<bool> start_ = false;
   std::condition_variable start_condition_;
   std::atomic<bool> running_ = false;
   RunnerList runner_list_;
   util::log::IDirectory directory_data_; // Commonly used workflow data
-
+  WorkflowServer* server_ = nullptr;
  private:
+  IWorkflow() = default;
   std::string name_;
   std::string description_;
   std::string start_event_;

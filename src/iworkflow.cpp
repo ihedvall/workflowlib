@@ -7,15 +7,21 @@
 #include <algorithm>
 #include <ranges>
 #include <util/stringutil.h>
+#include <workflow/workflowserver.h>
 
 using namespace util::xml;
 using namespace util::string;
 namespace workflow {
 
+IWorkflow::IWorkflow(WorkflowServer* server)
+  : server_(server) {
+}
+
 IWorkflow::IWorkflow(const IWorkflow& workflow)
 : name_(workflow.name_),
   description_(workflow.description_),
-  start_event_(workflow.start_event_) {
+  start_event_(workflow.start_event_),
+  server_(workflow.server_) {
   for ( const auto& runner : workflow.runner_list_) {
     if (!runner) {
       continue;
@@ -61,7 +67,8 @@ void IWorkflow::OnStart() {
 }
 
 void IWorkflow::AddRunner(const IRunner& runner) {
-  auto temp = IRunner::Create(runner);
+  auto temp = server_ != nullptr ? server_->CreateRunner(runner) :
+                                  std::make_unique<IRunner>(runner);
   runner_list_.emplace_back(std::move(temp));
 }
 
@@ -189,5 +196,6 @@ void IWorkflow::ClearData(size_t index) {
     data_list_[index].reset();
   }
 }
+
 
 }  // namespace workflow

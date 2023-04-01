@@ -22,6 +22,9 @@ ScanDirectoryData::ScanDirectoryData() {
   Name(kScanDirectory.data());
   Template(kScanDirectory.data());
   Description("Scanning workflow directory data");
+  std::ostringstream temp;
+  temp << "--slot=" << data_slot_ << " ";
+  Arguments(temp.str());
 }
 
 ScanDirectoryData::ScanDirectoryData(const IRunner& source)

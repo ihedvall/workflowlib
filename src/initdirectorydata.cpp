@@ -22,6 +22,12 @@ InitDirectoryData::InitDirectoryData() {
   Name(kInitDirectory.data());
   Template(kInitDirectory.data());
   Description("Initiate workflow directory data");
+  std::ostringstream temp;
+  temp << "--slot=" << data_slot_ << " ";
+  temp << "--include-filter=" << include_filter_ << " ";
+  temp << "--exclude-filter=" << exclude_filter_ << " ";
+  temp << "--root-dir=" << root_dir_ << " ";
+  Arguments(temp.str());
 }
 
 InitDirectoryData::InitDirectoryData(const IRunner& source)

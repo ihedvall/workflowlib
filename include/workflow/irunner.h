@@ -78,7 +78,7 @@ class IRunner {
   virtual void ReadXml(const util::xml::IXmlNode& root);
 
   void AttachWorkflow(IWorkflow* workflow);
-  static std::unique_ptr<IRunner> Create(const IRunner& source);
+
 
  protected:
 

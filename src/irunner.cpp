@@ -8,11 +8,6 @@
 #include <algorithm>
 #include <ranges>
 #include "workflow/iworkflow.h"
-#include "initdirectorydata.h"
-#include "scandirectorydata.h"
-#include "sysloginput.h"
-
-#include "template_names.icc"
 
 using namespace util::xml;
 using namespace util::string;
@@ -117,22 +112,6 @@ void IRunner::AttachWorkflow(IWorkflow* workflow) {
   workflow_ = workflow;
 }
 
-std::unique_ptr<IRunner> IRunner::Create(const IRunner& source) {
-  std::unique_ptr<IRunner> runner;
-  const auto& template_name = source.Template();
-  if (IEquals(template_name, kInitDirectory.data())) {
-    auto temp = std::make_unique<InitDirectoryData>(source);
-    runner = std::move(temp);
-  } else if (IEquals(template_name, kScanDirectory.data())) {
-    auto temp = std::make_unique<ScanDirectoryData>(source);
-    runner = std::move(temp);
-  } else if (IEquals(template_name, kSyslogInput.data())) {
-    auto temp = std::make_unique<SyslogInput>(source);
-    runner = std::move(temp);
-  } else {
-    runner = std::make_unique<IRunner>(source);
-  }
-  return runner;
-}
+
 
 }  // namespace workflow

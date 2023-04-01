@@ -6,7 +6,14 @@
 #include "workflow/workflowserver.h"
 #include <algorithm>
 #include <ranges>
+#include <vector>
+#include <memory>
 #include <util/stringutil.h>
+#include "initdirectorydata.h"
+#include "scandirectorydata.h"
+#include "sysloginput.h"
+
+#include "template_names.icc"
 
 using namespace util::xml;
 using namespace util::string;
@@ -18,6 +25,8 @@ WorkflowServer::WorkflowServer() {
 
  auto temp2 = std::make_unique<ParameterContainer>();
  parameter_container_ = std::move(temp2);
+
+ WorkflowServer::CreateDefaultTemplates();
 }
 
 WorkflowServer::WorkflowServer(const WorkflowServer& server)
@@ -183,11 +192,16 @@ IWorkflow* WorkflowServer::GetWorkflow(const std::string& name) {
 }
 
 void WorkflowServer::AddTemplate(const IRunner& temp) {
-  auto runner = IRunner::Create(temp);
+  auto runner = CreateRunner(temp);
+  if (!runner) {
+    return;
+  }
   auto itr = template_list_.find(temp.Name());
   if (itr == template_list_.end()) {
     template_list_.emplace(runner->Name(), std::move(runner));
-  } else {
+  } else if (!IEquals(temp.Name(), temp.Template()) ) {
+    // Found a template with this name. If name and template_name is the same,
+    // it is better to get the latest template instead of the old one
     itr->second = std::move(runner);
   }
 }
@@ -214,11 +228,14 @@ IRunner* WorkflowServer::GetTemplate(const std::string& name) {
 }
 
 void WorkflowServer::Init() {
+
   // Associate the event with its workflow
   for (auto& workflow : workflow_list_) {
     if (!workflow) {
       continue;
     }
+
+
     const auto& event_name = workflow->StartEvent();
     auto* event = event_engine_->GetEvent(event_name);
     if (event == nullptr) {
@@ -255,6 +272,11 @@ void WorkflowServer::Exit() {
     event_engine_->DetachWorkflows();
   }
 
+  for (auto& workflow : workflow_list_) {
+    if (!workflow) {
+      continue;
+    }
+  }
 }
 
 void WorkflowServer::SaveXml(IXmlNode& root) const {
@@ -318,13 +340,13 @@ void WorkflowServer::ReadXml(const IXmlNode& root) {
       if (workflow == nullptr || !workflow->IsTagName("Workflow")) {
         continue;
       }
-      auto flow = std::make_unique<IWorkflow>();
+      auto flow = std::make_unique<IWorkflow>(this);
       flow->ReadXml(*workflow);
       workflow_list_.emplace_back(std::move(flow));
     }
   }
 
-  template_list_.clear();
+  // Do not clear template_list_ here.
   const auto* template_root = engine_root->GetNode("TemplateList");
   if (template_root != nullptr) {
     IXmlNode::ChildList list;
@@ -392,4 +414,36 @@ void WorkflowServer::MoveDown(const IWorkflow* workflow) {
   *itr = std::move(temp);
 }
 
+std::unique_ptr<IRunner> WorkflowServer::CreateRunner(const IRunner& source) {
+  std::unique_ptr<IRunner> runner;
+  const auto& template_name = source.Template();
+  if (IEquals(template_name, kInitDirectory.data())) {
+    auto temp = std::make_unique<InitDirectoryData>(source);
+    runner = std::move(temp);
+  } else if (IEquals(template_name, kScanDirectory.data())) {
+    auto temp = std::make_unique<ScanDirectoryData>(source);
+    runner = std::move(temp);
+  } else if (IEquals(template_name, kSyslogInput.data())) {
+    auto temp = std::make_unique<SyslogInput>(source);
+    runner = std::move(temp);
+  } else {
+    runner = std::make_unique<IRunner>(source);
+  }
+  return runner;
+}
+
+void WorkflowServer::CreateDefaultTemplates() {
+  std::array<std::unique_ptr<IRunner>,3> temp_list = {
+    std::make_unique<InitDirectoryData>(),
+    std::make_unique<ScanDirectoryData>(),
+    std::make_unique<SyslogInput>() };
+
+  for (auto& temp : temp_list) {
+    if (template_list_.find(temp->Name()) == template_list_.end()) {
+      template_list_.emplace(temp->Name(),std::move(temp));
+    }
+  }
+
+
+}
 }  // namespace workflow
