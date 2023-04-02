@@ -6,10 +6,6 @@
 #include "workflow/eventengine.h"
 #include <algorithm>
 #include <ranges>
-#include "initevent.h"
-#include "exitevent.h"
-#include "periodicevent.h"
-#include "cyclicEvent.h"
 
 using namespace util::xml;
 
@@ -165,56 +161,34 @@ void EventEngine::DetachWorkflows() {
 }
 
 std::unique_ptr<IEvent> EventEngine::MakeEvent(const IEvent& source) {
-  std::unique_ptr<IEvent> event;
-  switch (source.Type()) {
-    case EventType::Internal:
-      if (source.Name() == "InitEvent") {
-        auto temp = std::make_unique<InitEvent>(source);
-        event = std::move(temp);
-      } else if (source.Name() == "ExitEvent") {
-        auto temp = std::make_unique<ExitEvent>(source);
-        event = std::move(temp);
-      } else {
-        auto temp = std::make_unique<IEvent>(source);
-        event = std::move(temp);
-      }
-      break;
-
-    case EventType::Periodic:
-      if (source.Name() == "PeriodEvent") {
-        auto temp = std::make_unique<PeriodicEvent>(source);
-        event = std::move(temp);
-      } else if (source.Name() == "CyclicEvent") {
-        auto temp = std::make_unique<CyclicEvent>(source);
-        event = std::move(temp);
-      } else {
-        auto temp = std::make_unique<IEvent>(source);
-        event = std::move(temp);
-      }
-      break;
-
-    case EventType::External:
-    case EventType::Parameter:
-    default: {
-      auto temp = std::make_unique<IEvent>(source);
-      event = std::move(temp);
-      break;
-    }
-  }
-  return event;
+  return std::make_unique<IEvent>(source);
 }
 
 void EventEngine::AddDefaultEvents() {
- InitEvent init_event;
+ IEvent init_event;
+ init_event.Name("InitEvent"),
+ init_event.Description("First event in the workflow server");
+ init_event.Type(EventType::Init);
  AddEvent(init_event);
 
- ExitEvent exit_event;
+ IEvent exit_event;
+ exit_event.Name("ExitEvent"),
+ exit_event.Description("Last event in the workflow server");
+ exit_event.Type(EventType::Exit);
  AddEvent(exit_event);
 
- CyclicEvent cyclic_event;
+ IEvent cyclic_event;
+ cyclic_event.Name("CyclicEvent_1s"),
+ cyclic_event.Description("Event that happens cyclic each second.");
+ cyclic_event.Type(EventType::Cyclic);
+ cyclic_event.Period(1000);
  AddEvent(cyclic_event);
 
- PeriodicEvent periodic_event;
+ IEvent periodic_event;
+ periodic_event.Name("PeriodicEvent_100Hz"),
+ periodic_event.Description("Event that happens periodically (exactly 10Hz).");
+ periodic_event.Type(EventType::Periodic);
+ periodic_event.Period(100);
  AddEvent(periodic_event);
 }
 

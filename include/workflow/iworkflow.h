@@ -67,13 +67,14 @@ class IWorkflow {
   bool InitData(size_t index, const T* value);
 
   void ClearData(size_t index);
+  [[nodiscard]] IWorkflow* GetWorkflow(const std::string& schedule_name);
 
  protected:
   std::atomic<bool> start_ = false;
   std::condition_variable start_condition_;
   std::atomic<bool> running_ = false;
   RunnerList runner_list_;
-  util::log::IDirectory directory_data_; // Commonly used workflow data
+
   WorkflowServer* server_ = nullptr;
  private:
   IWorkflow() = default;

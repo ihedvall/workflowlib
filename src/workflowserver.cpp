@@ -12,6 +12,8 @@
 #include "initdirectorydata.h"
 #include "scandirectorydata.h"
 #include "sysloginput.h"
+#include "syslogpublisher.h"
+#include "runsyslogschedule.h"
 
 #include "template_names.icc"
 
@@ -426,6 +428,12 @@ std::unique_ptr<IRunner> WorkflowServer::CreateRunner(const IRunner& source) {
   } else if (IEquals(template_name, kSyslogInput.data())) {
     auto temp = std::make_unique<SyslogInput>(source);
     runner = std::move(temp);
+  } else if (IEquals(template_name, kSyslogPublisher.data())) {
+    auto temp = std::make_unique<SyslogPublisher>(source);
+    runner = std::move(temp);
+  } else if (IEquals(template_name, kRunSyslogSchedule.data())) {
+    auto temp = std::make_unique<RunSyslogSchedule>(source);
+    runner = std::move(temp);
   } else {
     runner = std::make_unique<IRunner>(source);
   }
@@ -433,10 +441,13 @@ std::unique_ptr<IRunner> WorkflowServer::CreateRunner(const IRunner& source) {
 }
 
 void WorkflowServer::CreateDefaultTemplates() {
-  std::array<std::unique_ptr<IRunner>,3> temp_list = {
+  std::array<std::unique_ptr<IRunner>,5> temp_list = {
     std::make_unique<InitDirectoryData>(),
     std::make_unique<ScanDirectoryData>(),
-    std::make_unique<SyslogInput>() };
+    std::make_unique<SyslogInput>(),
+    std::make_unique<SyslogPublisher>(),
+    std::make_unique<RunSyslogSchedule>()
+        };
 
   for (auto& temp : temp_list) {
     if (template_list_.find(temp->Name()) == template_list_.end()) {

@@ -79,7 +79,6 @@ class IRunner {
 
   void AttachWorkflow(IWorkflow* workflow);
 
-
  protected:
 
   void Template(const std::string& template_name) {template_ = template_name;}

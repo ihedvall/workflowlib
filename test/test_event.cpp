@@ -8,9 +8,6 @@
 
 #include "workflow/ievent.h"
 #include <cmath>
-
-#include "cyclicevent.h"
-#include "periodicevent.h"
 #include "util/logstream.h"
 #include "util/logconfig.h"
 #include <chrono>
@@ -20,20 +17,21 @@ using namespace testing;
 using namespace std::chrono_literals;
 
 namespace {
-class MockCyclicEvent : public workflow::CyclicEvent {
+class MockCyclicEvent : public workflow::IEvent {
  public:
 
   void Tick() override {
-    workflow::CyclicEvent::Tick();
+
+    workflow::IEvent::Tick();
     LOG_TRACE() << "Tick()";
   };
 };
 
-class MockPeriodicEvent : public workflow::PeriodicEvent {
+class MockPeriodicEvent : public workflow::IEvent {
  public:
 
   void Tick() override {
-    workflow::PeriodicEvent::Tick();
+    workflow::IEvent::Tick();
     LOG_TRACE() << "Tick()";
   };
 };
@@ -46,6 +44,7 @@ TEST(IEvent, CyclicEvent) {
   log_config.CreateDefaultLogger();
 
   MockCyclicEvent event;
+  event.Type(EventType::Cyclic);
   event.Period(1000);
   event.Init();
   std::this_thread::sleep_for(10s);
@@ -58,9 +57,10 @@ TEST(IEvent, PeriodicEvent) {
   log_config.CreateDefaultLogger();
 
   MockPeriodicEvent event;
+  event.Type(EventType::Periodic);
   event.Period(1000);
   event.Init();
-  std::this_thread::sleep_for(10s);
+  std::this_thread::sleep_for(20s);
   event.Exit();
 }
 }

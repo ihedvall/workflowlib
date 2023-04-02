@@ -3,62 +3,57 @@
 * SPDX-License-Identifier: MIT
  */
 
-#include "sysloginput.h"
+#include "syslogpublisher.h"
 #include <boost/program_options.hpp>
 #include <vector>
 #include <util/syslogmessage.h>
-#include <util/stringutil.h>
 #include <util/utilfactory.h>
 #include "workflow/iworkflow.h"
 
 #include "template_names.icc"
 
 using namespace boost::program_options;
-using namespace util::string;
-using namespace util::syslog;
-using SyslogList = std::vector<util::syslog::SyslogMessage>;
 
+using namespace util::syslog;
 namespace workflow {
 
-SyslogInput::SyslogInput() {
-  Name(kSyslogInput.data());
-  Template(kSyslogInput.data());
-  Description("Server that receives syslog messages");
+SyslogPublisher::SyslogPublisher() {
+  Name(kSyslogPublisher.data());
+  Template(kSyslogPublisher.data());
+  Description("TCP server that publish syslog messages");
   std::ostringstream temp;
   temp << "--slot=" << data_slot_ << " ";
   temp << "--address=" << address_ << " ";
   temp << "--port=" << port_ << " ";
-  temp << "--type=" << type_ << " ";
 
   Arguments(temp.str());
 }
 
-SyslogInput::SyslogInput(const IRunner& source)
+SyslogPublisher::SyslogPublisher(const IRunner& source)
     : IRunner(source) {
-  Template(kSyslogInput.data());
+  Template(kSyslogPublisher.data());
   ParseArguments();
 }
 
-void SyslogInput::Init() {
+void SyslogPublisher::Init() {
   IRunner::Init();
   ParseArguments();
-  if (IEquals(type_, "TCP")) {
-    auto temp = util::UtilFactory::CreateSyslogServer(
-        SyslogServerType::TcpServer);
-    server_ = std::move(temp);
-  } else {
-    auto temp = util::UtilFactory::CreateSyslogServer(
-        SyslogServerType::UdpServer);
-    server_ = std::move(temp);
-  }
+
+  auto temp = util::UtilFactory::CreateSyslogServer(
+        SyslogServerType::TcpPublisher);
+  server_ = std::move(temp);
 
   server_->Name(Name());
   server_->Port(port_);
   server_->Address(address_);
   server_->Start();
+
   auto* workflow = GetWorkflow();
   if (workflow != nullptr) {
-    workflow->InitData<SyslogList>(data_slot_, nullptr);
+    const auto* data = workflow->GetData<SyslogMessage>(data_slot_);
+    if (data == nullptr) {
+      workflow->InitData<SyslogMessage>(data_slot_, nullptr);
+    }
     IsOk(true);
   } else {
     LastError("Workflow is not attached yet.");
@@ -66,26 +61,23 @@ void SyslogInput::Init() {
   }
 }
 
-void SyslogInput::Tick() {
+void SyslogPublisher::Tick() {
   IRunner::Tick();
   auto* workflow = GetWorkflow();
-  auto* syslog_list = workflow != nullptr ?
-                          workflow->GetData<SyslogList>(data_slot_) :
-                          nullptr;
-  if (syslog_list == nullptr || !server_) {
-    LastError("No syslog list found");
+  if (workflow == nullptr) {
+    return;
+  }
+  const auto* msg = workflow->GetData<SyslogMessage>(data_slot_);
+
+  if (msg == nullptr || !server_) {
+    LastError("No syslog message found");
     IsOk(false);
     return;
   }
-  syslog_list->clear();
-  for (auto msg = server_->GetMsg(false); msg; msg = server_->GetMsg(false)) {
-    // Insert message into the database
-    syslog_list->emplace_back(*msg);
-    msg.reset();
-  }
+  server_->AddMsg(*msg);
 }
 
-void SyslogInput::Exit() {
+void SyslogPublisher::Exit() {
   if (server_) {
     server_->Stop();
   }
@@ -96,7 +88,7 @@ void SyslogInput::Exit() {
   IRunner::Exit();
 }
 
-void SyslogInput::ParseArguments() {
+void SyslogPublisher::ParseArguments() {
   try {
     options_description desc("Available Arguments");
     desc.add_options() ("slot,S",
@@ -108,9 +100,6 @@ void SyslogInput::ParseArguments() {
     desc.add_options() ("port,P",
                        value<uint16_t>(&port_),
                        "Server IP port" );
-    desc.add_options() ("type,T",
-                       value<std::string>(&type_),
-                       "Type of server (UDP, TCP or TLS" );
 
     const auto arg_list = split_winmain(Arguments());
     basic_command_line_parser parser(arg_list);

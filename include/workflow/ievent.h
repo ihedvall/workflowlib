@@ -16,8 +16,9 @@ namespace workflow {
 class IWorkflow;
 
 enum class EventType {
-  Internal,
-  External,
+  Init,
+  Exit,
+  Cyclic,
   Periodic,
   Parameter,
 };
@@ -46,10 +47,6 @@ class IEvent {
   void Parameter(const std::string& parameter) {parameter_ = parameter;}
   [[nodiscard]] const std::string& Parameter() const {return parameter_;}
 
-  //virtual std::unique_ptr<IEvent> Create() = 0;
-
-  void AddRunner(std::unique_ptr<IRunner>& runner);
-
   virtual void SaveXml(util::xml::IXmlNode& root) const;
   virtual void ReadXml(const util::xml::IXmlNode& root);
 
@@ -60,13 +57,6 @@ class IEvent {
   void AttachWorkflow(IWorkflow* workflow);
   void DetachWorkflows();
 
-  template<typename T>
-  T* GetData();
-
-  template<typename T>
-  bool InitData(const T* value);
-
-  void ClearData() {data_.reset();}
  protected:
 
  private:
@@ -74,34 +64,16 @@ class IEvent {
   std::string description_;
   std::string parameter_;
   uint64_t period_ = 1000; ///< Period in ms
-  EventType type_ = EventType::External;
-  std::unique_ptr<IRunner> runner_;
+  EventType type_ = EventType::Cyclic;
   std::vector<IWorkflow*> workflow_list_;
-  std::any data_; ///< Event data
+
+  std::thread working_thread_;
+  std::atomic<bool> stop_thread_ = true;
+  uint64_t step_time_ = 0;
+  int64_t next_time_ = 0;
+
+  void PeriodicTask();
+  void CyclicTask();
 };
-
-template <typename T>
-T* IEvent::GetData() {
-  try {
-    if (!data_.has_value()) {
-      return nullptr;
-    }
-    auto* value = std::any_cast<T>(&data_);
-    return value;
-  } catch (const std::exception&) {
-
-  }
-  return nullptr;
-}
-
-template <typename T>
-bool IEvent::InitData(const T* value) {
-  try {
-    data_ = value != nullptr ? std::make_any<T>(*value) : std::make_any<T>();
-  } catch (const std::exception&) {
-    return false;
-  }
-  return true;
-}
 
 }  // namespace workflow

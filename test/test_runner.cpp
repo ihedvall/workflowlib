@@ -51,8 +51,7 @@ TEST(IRunner, Boost_program_options) {
 
   basic_command_line_parser parser(arg_list);
   parser.options(desc);
-
-
+  parser.positional(pos);
 
   const auto opt = parser.run();
 
@@ -68,6 +67,7 @@ TEST(IRunner, Boost_program_options) {
   std::cout << "Exclude: " << exclude_filter << std::endl;
   std::cout << "Root: " << root_dir[0] << std::endl;
   std::cout << "Root: " << root_dir[1] << std::endl;
+
 
   for (const auto& itr : var_list) {
     std::cout << itr.first << " : " << std::endl;

@@ -13,7 +13,7 @@ namespace {
 wxArrayString EventTypes() {
   wxArrayString temp;
   workflow::IEvent event;
-  for (auto type = static_cast<int>(workflow::EventType::Internal);
+  for (auto type = static_cast<int>(workflow::EventType::Init);
        type <= static_cast<int>(workflow::EventType::Parameter);
        ++type) {
     event.Type(static_cast<workflow::EventType>(type));

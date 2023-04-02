@@ -31,14 +31,12 @@ add_library(workflow STATIC
         src/parametercontainer.cpp include/workflow/parametercontainer.h
         src/workflowserver.cpp include/workflow/workflowserver.h
         src/idevice.cpp include/workflow/idevice.h
-        src/initevent.cpp src/initevent.h
-        src/exitevent.cpp src/exitevent.h
-        src/periodicevent.cpp src/periodicevent.h
-        src/cyclicevent.cpp src/cyclicevent.h
         src/initdirectorydata.cpp src/initdirectorydata.h
         src/template_names.icc
         src/scandirectorydata.cpp src/scandirectorydata.h
-        src/sysloginput.cpp src/sysloginput.h)
+        src/sysloginput.cpp src/sysloginput.h
+        src/syslogpublisher.cpp src/syslogpublisher.h
+        src/runsyslogschedule.cpp src/runsyslogschedule.h)
 
 target_include_directories(workflow PUBLIC
         $<INSTALL_INTERFACE:include>

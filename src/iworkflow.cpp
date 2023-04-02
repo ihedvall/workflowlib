@@ -197,5 +197,11 @@ void IWorkflow::ClearData(size_t index) {
   }
 }
 
+IWorkflow* IWorkflow::GetWorkflow(const std::string& schedule_name) {
+  if (server_ == nullptr) {
+    return nullptr;
+  }
+  return server_ != nullptr ? server_->GetWorkflow(schedule_name) : nullptr;
+}
 
 }  // namespace workflow
