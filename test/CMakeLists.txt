@@ -7,7 +7,7 @@ project(TestWorkflow
         LANGUAGES CXX)
 
 add_executable(test_workflow
-        test_parameter.cpp test_parameter_container.cpp test_event.cpp test_runner.cpp)
+        test_parameter.cpp test_parameter_container.cpp test_event.cpp test_runner.cpp test_workflowserver.cpp)
 
 target_include_directories(test_workflow PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../include

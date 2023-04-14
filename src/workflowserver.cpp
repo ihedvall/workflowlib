@@ -8,6 +8,7 @@
 #include <ranges>
 #include <vector>
 #include <memory>
+#include <sstream>
 #include <util/stringutil.h>
 #include "initdirectorydata.h"
 #include "scandirectorydata.h"
@@ -33,7 +34,8 @@ WorkflowServer::WorkflowServer() {
 
 WorkflowServer::WorkflowServer(const WorkflowServer& server)
 : name_(server.name_),
-  description_(server.description_)
+  description_(server.description_),
+  property_list_(server.property_list_)
 {
   if (server.parameter_container_) {
     parameter_container_ =
@@ -61,6 +63,7 @@ WorkflowServer& WorkflowServer::operator=(const WorkflowServer& server) {
   }
   name_ = server.name_;
   description_ = server.description_;
+  property_list_ = server.property_list_;
 
   parameter_container_.reset();
   if (server.parameter_container_) {
@@ -94,6 +97,7 @@ WorkflowServer& WorkflowServer::operator=(const WorkflowServer& server) {
 bool WorkflowServer::operator==(const WorkflowServer& server) const {
   if (name_ != server.name_) return false;
   if (description_ != server.description_) return false;
+  if (property_list_ != server.property_list_) return false;
 
   if (!parameter_container_ && server.parameter_container_) return false;
   if (parameter_container_ && !server.parameter_container_) return false;
@@ -282,6 +286,28 @@ void WorkflowServer::Exit() {
 }
 
 void WorkflowServer::SaveXml(IXmlNode& root) const {
+  // Save application properties that have been modified or added.
+  // Application properties cannot be removed.
+  if (!property_list_.empty()) {
+    auto& application_root = root.AddUniqueNode("Application");
+    for (const auto& prop : property_list_) {
+      auto key = prop.first;
+      const auto& value = prop.second;
+      const auto sep = key.find('/');
+      std::string grp;
+      if (sep != std::string::npos) {
+        grp = key.substr(0,sep);
+        key = key.substr(sep + 1);
+      }
+      if (grp.empty()) {
+        application_root.SetProperty(key, value);
+      } else if (!key.empty()){
+        auto& group = application_root.AddUniqueNode(grp);
+        group.SetProperty(key, value);
+      }
+    }
+  }
+
   // Remove old node if it exists
   const auto* old_root = root.GetNode("Engine");
   if (old_root != nullptr) {
@@ -315,10 +341,47 @@ void WorkflowServer::SaveXml(IXmlNode& root) const {
       runner.second->SaveXml(template_root);
     }
   }
-
 }
 
 void WorkflowServer::ReadXml(const IXmlNode& root) {
+  const auto* application_root = root.GetNode("Application");
+  if (application_root != nullptr) {
+    property_list_.clear();
+    IXmlNode::ChildList group_list;
+    application_root->GetChildList(group_list);
+    for (const auto* group : group_list) {
+      if (group == nullptr) {
+        continue;
+      }
+      std::ostringstream key;
+      key << group->TagName();
+      IXmlNode::ChildList key_list;
+      group->GetChildList(key_list);
+      if (key_list.empty()) {
+        // No more items. Create property
+        auto value = group->Value<std::string>();
+        if (value.empty()) {
+          value = group->Attribute<std::string>("value");
+        }
+        property_list_.emplace(key.str(), value);
+      } else {
+        IXmlNode::ChildList value_list;
+        group->GetChildList(value_list);
+        for (const auto* value_tag : value_list) {
+          if (value_tag == nullptr) {
+            continue;
+          }
+          key << "/" << value_tag->TagName();
+          auto value = value_tag->Value<std::string>();
+          if (value.empty()) {
+            value = value_tag->Attribute<std::string>("value");
+          }
+          property_list_.emplace(key.str(), value);
+        }
+      }
+    }
+  }
+
   const auto* engine_root = root.GetNode("Engine");
   if (engine_root == nullptr) {
     return;
@@ -454,7 +517,35 @@ void WorkflowServer::CreateDefaultTemplates() {
       template_list_.emplace(temp->Name(),std::move(temp));
     }
   }
-
-
 }
+
+template <>
+std::string WorkflowServer::GetApplicationProperty(
+    const std::string& key) const {
+  const auto itr = property_list_.find(key);
+  return itr != property_list_.cend() ? itr->second : std::string();
+}
+
+template <>
+bool WorkflowServer::GetApplicationProperty(
+    const std::string& key) const {
+  bool value = false;
+  if (const auto itr = property_list_.find(key); itr != property_list_.cend()) {
+    if (const auto& text = itr->second; !text.empty()) {
+      switch (text[0]) {
+        case 't':
+        case 'T':
+        case 'Y':
+        case 'y':
+        case '1':
+          value = true;
+          break;
+        default:
+          break;
+      }
+    }
+  }
+  return value;
+}
+
 }  // namespace workflow

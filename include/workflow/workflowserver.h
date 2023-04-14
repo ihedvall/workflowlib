@@ -20,6 +20,9 @@ namespace workflow {
 using WorkflowList = std::vector<std::unique_ptr<IWorkflow>>;
 using TemplateList = std::map<std::string, std::unique_ptr<IRunner>,
     util::string::IgnoreCase>;
+using PropertyList = std::map<std::string, std::string,
+      util::string::IgnoreCase>;
+
 class WorkflowServer {
  public:
   WorkflowServer();
@@ -72,13 +75,56 @@ class WorkflowServer {
   [[nodiscard]] virtual std::unique_ptr<IRunner> CreateRunner(
       const IRunner& source);
   virtual void CreateDefaultTemplates();
+
+  [[nodiscard]] const PropertyList& ApplicationProperties() const {
+    return property_list_;
+  }
+  [[nodiscard]] PropertyList& ApplicationProperties() {
+    return property_list_;
+  }
+
+  template <typename T>
+  [[nodiscard]] T GetApplicationProperty(const std::string& key) const;
+
+  void SetApplicationProperty(
+      const std::string& key, const std::string& value) {
+    if (auto itr = property_list_.find(key); itr != property_list_.end()) {
+      itr->second = value;
+    } else {
+      property_list_.emplace(key,value);
+    }
+  }
+
  private:
   std::string name_;
   std::string description_;
   std::unique_ptr<ParameterContainer> parameter_container_;
   std::unique_ptr<EventEngine> event_engine_;
   WorkflowList workflow_list_;
-  TemplateList template_list_;
+  TemplateList template_list_; ///< List of available template task
+  PropertyList property_list_; ///< Application tag properties
 };
 
+template <typename T>
+T WorkflowServer::GetApplicationProperty(const std::string& key) const {
+  T value {};
+  const auto itr = property_list_.find(key);
+  try {
+    if (itr != property_list_.cend()) {
+      std::istringstream conv(itr->second);
+      conv >> value;
+    }
+  } catch (const std::exception& ) {
+  }
+  return value;
+}
+
+template <>
+std::string WorkflowServer::GetApplicationProperty(
+    const std::string& key) const;
+
+
+template <>
+bool WorkflowServer::GetApplicationProperty(
+    const std::string& key) const;
 }  // namespace workflow
