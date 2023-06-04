@@ -56,7 +56,7 @@ void InitDirectoryData::Tick() {
     auto* data = workflow->GetData<IDirectory>(data_slot_);
     if (data == nullptr) {
       IDirectory dir;
-      dir.ParentDir(root_dir_);
+      dir.Directory(root_dir_);
       dir.StringToIncludeList(include_filter_);
       dir.StringToExcludeList(exclude_filter_);
       const auto create = workflow->InitData<IDirectory>(data_slot_, &dir);
