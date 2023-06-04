@@ -46,7 +46,8 @@ class IWorkflow {
   [[nodiscard]] IRunner* GetRunner(const std::string& name);
   void AddRunner(const IRunner& runner);
   void DeleteRunner(const IRunner* runner);
-
+  [[nodiscard]] const IRunner* GetRunnerByTemplateName(const std::string& name)
+      const;
   virtual void OnStart();
   [[nodiscard]] bool IsRunning() const {return running_;}
 

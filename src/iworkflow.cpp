@@ -203,5 +203,15 @@ IWorkflow* IWorkflow::GetWorkflow(const std::string& schedule_name) {
   }
   return server_ != nullptr ? server_->GetWorkflow(schedule_name) : nullptr;
 }
+const IRunner* IWorkflow::GetRunnerByTemplateName(
+    const std::string& name) const {
+  const auto itr = std::ranges::find_if(runner_list_, [&] (const auto& runner) {
+    return runner && IEquals(name, runner->Template());
+  });
+  if (itr != runner_list_.cend()) {
+    return itr->get();
+  }
+  return nullptr;
+}
 
 }  // namespace workflow

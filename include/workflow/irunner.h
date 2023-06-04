@@ -84,7 +84,8 @@ class IRunner {
   void Template(const std::string& template_name) {template_ = template_name;}
 
   [[nodiscard]] IWorkflow* GetWorkflow() {return workflow_;}
-
+  [[nodiscard]] const IRunner* GetRunnerByTemplateName(const std::string& name)
+      const;
  private:
   std::string name_;
   std::string description_;

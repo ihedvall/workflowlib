@@ -112,6 +112,9 @@ void IRunner::AttachWorkflow(IWorkflow* workflow) {
   workflow_ = workflow;
 }
 
-
+const IRunner* IRunner::GetRunnerByTemplateName(const std::string& name) const {
+  return workflow_ != nullptr ? workflow_->GetRunnerByTemplateName(name) :
+    nullptr;
+}
 
 }  // namespace workflow
