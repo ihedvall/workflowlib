@@ -8,6 +8,8 @@
 #include <atomic>
 #include <memory>
 #include <vector>
+#include <thread>
+
 #include "workflow/irunner.h"
 #include <util/ixmlnode.h>
 

@@ -44,7 +44,7 @@ TEST(IRunner, Boost_program_options) {
   positional_options_description pos;
   pos.add("root-dir", -1);
 
-  const auto arg_list = split_winmain(option1.data());
+  const auto arg_list = split_unix(option1.data());
   for (const auto& arg : arg_list) {
     std::cout << arg << std::endl;
   }
@@ -69,8 +69,8 @@ TEST(IRunner, Boost_program_options) {
   std::cout << "Root: " << root_dir[1] << std::endl;
 
 
-  for (const auto& itr : var_list) {
-    std::cout << itr.first << " : " << std::endl;
+  for (const auto& [key, _] : var_list) {
+    std::cout << key << " : " << std::endl;
   }
 
 }

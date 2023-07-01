@@ -101,7 +101,7 @@ void SyslogPublisher::ParseArguments() {
                        value<uint16_t>(&port_),
                        "Server IP port" );
 
-    const auto arg_list = split_winmain(Arguments());
+    const auto arg_list = split_unix(Arguments());
     basic_command_line_parser parser(arg_list);
     parser.options(desc);
     const auto opt = parser.run();

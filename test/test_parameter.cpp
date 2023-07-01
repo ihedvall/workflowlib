@@ -112,7 +112,7 @@ TEST(IParameter, TestFloat) {
     par.SetValue(false, input);
     double output = 0.0;
     EXPECT_FALSE(par.GetValue(output));
-    EXPECT_TRUE(isnan(output));
+    EXPECT_TRUE(std::isnan(output));
     std::cout << "NaN Float: " << input << "/" << output << std::endl;
   }
 

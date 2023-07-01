@@ -91,7 +91,7 @@ void RunSyslogSchedule::ParseArguments() {
                        value<std::string>(&schedule_name_),
                        "Name of schedule to run" );
 
-    const auto arg_list = split_winmain(Arguments());
+    const auto arg_list = split_unix(Arguments());
     basic_command_line_parser parser(arg_list);
     parser.options(desc);
 

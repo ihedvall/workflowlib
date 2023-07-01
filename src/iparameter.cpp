@@ -6,6 +6,7 @@
 #include "workflow/iparameter.h"
 #include <ranges>
 #include <algorithm>
+#include <cstring>
 #include <util/stringutil.h>
 
 using namespace util::xml;
