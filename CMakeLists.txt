@@ -8,8 +8,8 @@ project(workflowlib
 
 option(BUILD_SHARED_LIBS "Static libraries are preferred" OFF)
 option(WORKFLOW_DOC "If doxygen is installed, then build documentation in Release mode" OFF)
-option(WORKFLOW_TEST "If Google Test is installed, then build the unit tests" ON)
-#option(WORKFLOW_TOOLs "If disabled, only the library is built" ON)
+option(WORKFLOW_TEST "If Google Test is installed, then build the unit tests" OFF)
+#option(WORKFLOW_TOOLs "If disabled, only the library is built" OFF)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_DEBUG_POSTFIX d)
@@ -17,11 +17,18 @@ set(CMAKE_DEBUG_POSTFIX d)
 include(CMakePrintHelpers)
 include(script/utillib.cmake)
 include(script/boost.cmake)
-include(script/googletest.cmake)
-include(script/doxygen.cmake)
+
+if (WORKFLOW_TEST)
+    include(script/googletest.cmake)
+endif()
+
+if (WORKFLOW_DOC)
+    include(script/doxygen.cmake)
+endif()
+
 #include(script/wxwidgets.cmake)
 
-add_library(workflow STATIC
+add_library(workflow
         src/eventengine.cpp include/workflow/eventengine.h
         src/ievent.cpp include/workflow/ievent.h
         src/iworkflow.cpp include/workflow/iworkflow.h
@@ -54,7 +61,7 @@ if (MSVC)
     target_compile_definitions(workflow PRIVATE _WIN32_WINNT=0x0A00)
 endif ()
 
-if (GTEST_FOUND AND WORKFLOW_TEST)
+if (WORKFLOW_TEST)
     enable_testing()
     add_subdirectory(test)
 endif ()
