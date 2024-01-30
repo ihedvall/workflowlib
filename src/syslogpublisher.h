@@ -20,7 +20,6 @@ class SyslogPublisher : public IRunner {
   void Exit() override;
 
  private:
-  size_t data_slot_ = 0;
   std::string address_ = "127.0.0.1"; ///<  0.0.0.0 accept remote connects
   uint16_t port_ = 42515;
   std::unique_ptr<util::syslog::ISyslogServer> server_;

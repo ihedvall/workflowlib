@@ -22,7 +22,6 @@ SyslogPublisher::SyslogPublisher() {
   Template(kSyslogPublisher.data());
   Description("TCP server that publish syslog messages");
   std::ostringstream temp;
-  temp << "--slot=" << data_slot_ << " ";
   temp << "--address=" << address_ << " ";
   temp << "--port=" << port_ << " ";
 
@@ -50,10 +49,8 @@ void SyslogPublisher::Init() {
 
   auto* workflow = GetWorkflow();
   if (workflow != nullptr) {
-    const auto* data = workflow->GetData<SyslogMessage>(data_slot_);
-    if (data == nullptr) {
-      workflow->InitData<SyslogMessage>(data_slot_, nullptr);
-    }
+    const SyslogMessage empty_msg;
+    workflow->InitData(empty_msg);
     IsOk(true);
   } else {
     LastError("Workflow is not attached yet.");
@@ -67,7 +64,7 @@ void SyslogPublisher::Tick() {
   if (workflow == nullptr) {
     return;
   }
-  const auto* msg = workflow->GetData<SyslogMessage>(data_slot_);
+  const auto* msg = workflow->GetData<SyslogMessage>();
 
   if (msg == nullptr || !server_) {
     LastError("No syslog message found");
@@ -83,7 +80,7 @@ void SyslogPublisher::Exit() {
   }
   auto* workflow = GetWorkflow();
   if (workflow != nullptr) {
-    workflow->ClearData(data_slot_);
+    workflow->ClearData();
   }
   IRunner::Exit();
 }
@@ -91,9 +88,6 @@ void SyslogPublisher::Exit() {
 void SyslogPublisher::ParseArguments() {
   try {
     options_description desc("Available Arguments");
-    desc.add_options() ("slot,S",
-                       value<size_t>(&data_slot_),
-                       "Slot index for data" );
     desc.add_options() ("address,A",
                        value<std::string>(&address_),
                        "Server address defines local or global access" );

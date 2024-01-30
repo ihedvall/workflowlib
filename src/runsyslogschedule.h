@@ -17,8 +17,6 @@ class RunSyslogSchedule : public IRunner {
   void Tick() override;
 
  private:
-  size_t in_slot_ = 0; ///< Data slot for incoming messages
-  size_t out_slot_ = 0; ///< Data slot for outgoing messages
   std::string schedule_name_ = "SyslogSchedule"; ///<  Schedule name
   void ParseArguments();
 };

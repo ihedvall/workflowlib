@@ -16,7 +16,6 @@ class ScanDirectoryData : public IRunner {
   void Init() override;
   void Tick() override;
  private:
-  size_t data_slot_ = 0;
 
   void ParseArguments();
 };

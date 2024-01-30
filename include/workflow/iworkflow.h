@@ -62,12 +62,13 @@ class IWorkflow {
   void Exit();
 
   template<typename T>
-  T* GetData(size_t index);
+  T* GetData();
 
   template<typename T>
-  bool InitData(size_t index, const T* value);
+  bool InitData(const T& value);
 
-  void ClearData(size_t index);
+  void ClearData();
+
   [[nodiscard]] IWorkflow* GetWorkflow(const std::string& schedule_name);
 
  protected:
@@ -82,20 +83,16 @@ class IWorkflow {
   std::string name_;
   std::string description_;
   std::string start_event_;
-  std::array<std::any, 10> data_list_;
+  std::any data_;
 };
 
 template <typename T>
-T* IWorkflow::GetData(size_t index) {
-  if (index >= data_list_.size()) {
-    return nullptr;
-  }
-  auto& data = data_list_[index];
-   try {
-    if (!data.has_value()) {
+T* IWorkflow::GetData() {
+ try {
+    if (!data_.has_value()) {
       return nullptr;
     }
-    auto* value = std::any_cast<T>(&data);
+    auto* value = std::any_cast<T>(&data_);
     return value;
   } catch (const std::exception&) {
 
@@ -104,13 +101,9 @@ T* IWorkflow::GetData(size_t index) {
 }
 
 template <typename T>
-bool IWorkflow::InitData(size_t index, const T* value) {
-  if (index >= data_list_.size()) {
-    return false;
-  }
-  auto& item = data_list_[index];
+bool IWorkflow::InitData(const T& value) {
   try {
-    item = value != nullptr ? std::make_any<T>(*value) : std::make_any<T>();
+    data_ = std::make_any<T>(value);
   } catch (const std::exception&) {
     return false;
   }

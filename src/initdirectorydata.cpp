@@ -23,7 +23,6 @@ InitDirectoryData::InitDirectoryData() {
   Template(kInitDirectory.data());
   Description("Initiate workflow directory data");
   std::ostringstream temp;
-  temp << "--slot=" << data_slot_ << " ";
   temp << "--include-filter=" << include_filter_ << " ";
   temp << "--exclude-filter=" << exclude_filter_ << " ";
   temp << "--root-dir=" << root_dir_ << " ";
@@ -53,13 +52,15 @@ void InitDirectoryData::Tick() {
 
   // Check that data exist in the workflow. If not create it
   try {
-    auto* data = workflow->GetData<IDirectory>(data_slot_);
+    auto* data = workflow->GetData<IDirectory>();
     if (data == nullptr) {
+      // The initializing of directory is placed here instead of in the Init()
+      // due to network error
       IDirectory dir;
       dir.Directory(root_dir_);
       dir.StringToIncludeList(include_filter_);
       dir.StringToExcludeList(exclude_filter_);
-      const auto create = workflow->InitData<IDirectory>(data_slot_, &dir);
+      const auto create = workflow->InitData<IDirectory>(dir);
       if (!create) {
         LastError("Failed to init the directory data");
         IsOk(false);
@@ -81,9 +82,6 @@ void InitDirectoryData::ParseArguments() {
   try {
     options_description desc("Available Arguments");
 //    desc.add_options() ("help,H", "Help");
-    desc.add_options() ("slot,S",
-                       value<size_t>(&data_slot_),
-                       "Slot index for data" );
     desc.add_options() ("include-filter,I",
                        value<std::string>(&include_filter_),
                        "Include filter string list" );

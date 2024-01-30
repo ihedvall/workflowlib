@@ -191,18 +191,14 @@ void IWorkflow::Exit() {
   }
 }
 
-void IWorkflow::ClearData(size_t index) {
-  if (index < data_list_.size()) {
-    data_list_[index].reset();
-  }
+void IWorkflow::ClearData() {
+  data_.reset();
 }
 
 IWorkflow* IWorkflow::GetWorkflow(const std::string& schedule_name) {
-  if (server_ == nullptr) {
-    return nullptr;
-  }
   return server_ != nullptr ? server_->GetWorkflow(schedule_name) : nullptr;
 }
+
 const IRunner* IWorkflow::GetRunnerByTemplateName(
     const std::string& name) const {
   const auto itr = std::ranges::find_if(runner_list_, [&] (const auto& runner) {

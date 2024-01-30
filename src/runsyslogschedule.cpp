@@ -23,8 +23,6 @@ RunSyslogSchedule::RunSyslogSchedule() {
   Template(kRunSyslogSchedule.data());
   Description("Task that forward syslog message to another schedule");
   std::ostringstream temp;
-  temp << "--input=" << in_slot_ << " ";
-  temp << "--output" << out_slot_ << " ";
   temp << "--name=" << schedule_name_ << " ";
 
   Arguments(temp.str());
@@ -58,14 +56,14 @@ void RunSyslogSchedule::Tick() {
     return;
   }
 
-  auto* syslog_list = workflow->GetData<SyslogList>(in_slot_);
+  auto* syslog_list = workflow->GetData<SyslogList>();
   if (syslog_list == nullptr) {
     LastError("No syslog list found");
     IsOk(false);
     return;
   }
 
-  auto* remote_msg = remote->GetData<SyslogMessage>(out_slot_);
+  auto* remote_msg = remote->GetData<SyslogMessage>();
   if (remote_msg == nullptr) {
     LastError("No remote data found");
     IsOk(false);
@@ -81,12 +79,6 @@ void RunSyslogSchedule::Tick() {
 void RunSyslogSchedule::ParseArguments() {
   try {
     options_description desc("Available Arguments");
-    desc.add_options() ("input,I",
-                       value<size_t>(&in_slot_),
-                       "Slot index for input data" );
-    desc.add_options() ("output,O",
-                       value<size_t>(&out_slot_),
-                       "Slot index for output data" );
     desc.add_options() ("name,N",
                        value<std::string>(&schedule_name_),
                        "Name of schedule to run" );

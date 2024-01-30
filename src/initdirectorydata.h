@@ -9,6 +9,7 @@
 
 namespace workflow {
 
+
 class InitDirectoryData : public IRunner {
  public:
   InitDirectoryData();
@@ -16,7 +17,6 @@ class InitDirectoryData : public IRunner {
   void Init() override;
   void Tick() override;
  private:
-  size_t data_slot_ = 0;
   std::string root_dir_;
   std::string include_filter_;
   std::string exclude_filter_;

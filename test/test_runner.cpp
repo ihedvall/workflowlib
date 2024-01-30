@@ -15,11 +15,24 @@ namespace workflow::test {
 TEST(IRunner, Properties) {
   IRunner task;
 
-  task.Name("Olle");
-  EXPECT_STREQ(task.Name().c_str(), "Olle" );
+  constexpr std::string_view kOrigName = "William";
+  task.Name(kOrigName.data());
+  EXPECT_STREQ(task.Name().c_str(), kOrigName.data() );
 
-  task.Description("Pelle");
-  EXPECT_STREQ(task.Description().c_str(), "Pelle" );
+  constexpr std::string_view kOrigDesc = "Adama";
+  task.Description(kOrigDesc.data());
+  EXPECT_STREQ(task.Description().c_str(), kOrigDesc.data() );
+
+  constexpr std::string_view kOrigDoc = "Human";
+  task.Documentation(kOrigDoc.data());
+  EXPECT_STREQ(task.Documentation().c_str(), kOrigDoc.data() );
+
+  task.Type(RunnerType::PythonRunner);
+  EXPECT_EQ(task.Type(), RunnerType::PythonRunner);
+
+  task.Period(1.23); // seconds
+  EXPECT_DOUBLE_EQ(task.Period(), 1.23);
+
 }
 
 TEST(IRunner, Boost_program_options) {

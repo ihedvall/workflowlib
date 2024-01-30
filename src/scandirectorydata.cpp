@@ -23,7 +23,6 @@ ScanDirectoryData::ScanDirectoryData() {
   Template(kScanDirectory.data());
   Description("Scanning workflow directory data");
   std::ostringstream temp;
-  temp << "--slot=" << data_slot_ << " ";
   Arguments(temp.str());
 }
 
@@ -51,7 +50,7 @@ void ScanDirectoryData::Tick() {
 
   // Check that data exist in the workflow. If not create it
   try {
-    auto* data = workflow->GetData<IDirectory>(data_slot_);
+    auto* data = workflow->GetData<IDirectory>();
     if (data == nullptr) {
       LastError("Failed to get the directory data");
       IsOk(false);
@@ -62,23 +61,20 @@ void ScanDirectoryData::Tick() {
     if (!scan) {
       LastError(data->LastError());
       IsOk(false);
+    } else {
+      IsOk(true);
     }
-    IsOk(true);
   } catch (const std::exception& err) {
     std::ostringstream msg;
     msg << "Internal error. Error: " << err.what();
     IsOk(false);
   }
-
 }
 
 void ScanDirectoryData::ParseArguments() {
   try {
     options_description desc("Available Arguments");
     //    desc.add_options() ("help,H", "Help");
-    desc.add_options() ("slot,S",
-                       value<size_t>(&data_slot_),
-                       "Slot index for data" );
 
     const auto arg_list = split_unix(Arguments());
     basic_command_line_parser parser(arg_list);

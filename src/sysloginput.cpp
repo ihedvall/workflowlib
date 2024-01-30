@@ -16,6 +16,7 @@
 using namespace boost::program_options;
 using namespace util::string;
 using namespace util::syslog;
+
 using SyslogList = std::vector<util::syslog::SyslogMessage>;
 
 namespace workflow {
@@ -25,7 +26,6 @@ SyslogInput::SyslogInput() {
   Template(kSyslogInput.data());
   Description("Server that receives syslog messages");
   std::ostringstream temp;
-  temp << "--slot=" << data_slot_ << " ";
   temp << "--address=" << address_ << " ";
   temp << "--port=" << port_ << " ";
   temp << "--type=" << type_ << " ";
@@ -58,7 +58,8 @@ void SyslogInput::Init() {
   server_->Start();
   auto* workflow = GetWorkflow();
   if (workflow != nullptr) {
-    workflow->InitData<SyslogList>(data_slot_, nullptr);
+    SyslogList empty_list;
+    workflow->InitData(empty_list);
     IsOk(true);
   } else {
     LastError("Workflow is not attached yet.");
@@ -70,7 +71,7 @@ void SyslogInput::Tick() {
   IRunner::Tick();
   auto* workflow = GetWorkflow();
   auto* syslog_list = workflow != nullptr ?
-                          workflow->GetData<SyslogList>(data_slot_) :
+                          workflow->GetData<SyslogList>() :
                           nullptr;
   if (syslog_list == nullptr || !server_) {
     LastError("No syslog list found");
@@ -91,7 +92,7 @@ void SyslogInput::Exit() {
   }
   auto* workflow = GetWorkflow();
   if (workflow != nullptr) {
-    workflow->ClearData(data_slot_);
+    workflow->ClearData();
   }
   IRunner::Exit();
 }
@@ -99,9 +100,6 @@ void SyslogInput::Exit() {
 void SyslogInput::ParseArguments() {
   try {
     options_description desc("Available Arguments");
-    desc.add_options() ("slot,S",
-                       value<size_t>(&data_slot_),
-                       "Slot index for data" );
     desc.add_options() ("address,A",
                        value<std::string>(&address_),
                        "Server address defines local or global access" );
