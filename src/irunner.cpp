@@ -6,7 +6,6 @@
 #include "workflow/irunner.h"
 #include <util/stringutil.h>
 #include <algorithm>
-#include <ranges>
 #include "workflow/iworkflow.h"
 
 using namespace util::xml;

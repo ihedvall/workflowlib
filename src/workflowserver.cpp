@@ -5,18 +5,11 @@
 
 #include "workflow/workflowserver.h"
 #include <algorithm>
-#include <ranges>
 #include <vector>
 #include <memory>
 #include <sstream>
 #include <util/stringutil.h>
-#include "initdirectorydata.h"
-#include "scandirectorydata.h"
-#include "sysloginput.h"
-#include "syslogpublisher.h"
-#include "runsyslogschedule.h"
-
-#include "template_names.icc"
+#include "defaulttemplatefactory.h"
 
 using namespace util::xml;
 using namespace util::string;
@@ -29,7 +22,9 @@ WorkflowServer::WorkflowServer() {
  auto temp2 = std::make_unique<ParameterContainer>();
  parameter_container_ = std::move(temp2);
 
- WorkflowServer::CreateDefaultTemplates();
+ const auto& default_runner = DefaultTemplateFactory::Instance();
+ factory_list_.emplace_back(&default_runner);
+
 }
 
 WorkflowServer::WorkflowServer(const WorkflowServer& server)
@@ -51,10 +46,7 @@ WorkflowServer::WorkflowServer(const WorkflowServer& server)
     auto temp = std::make_unique<IWorkflow>(*workflow);
     workflow_list_.push_back(std::move(temp));
   }
-  for (const auto& tmpl : server.template_list_) {
-    if (!tmpl.second) continue;
-    AddTemplate(*tmpl.second);
-  }
+  factory_list_ = server.factory_list_;
 }
 
 WorkflowServer& WorkflowServer::operator=(const WorkflowServer& server) {
@@ -86,11 +78,7 @@ WorkflowServer& WorkflowServer::operator=(const WorkflowServer& server) {
     workflow_list_.push_back(std::move(temp));
   }
 
-  template_list_.clear();
-  for (const auto& tmpl : server.template_list_) {
-    if (!tmpl.second) continue;
-    AddTemplate(*tmpl.second);
-  }
+  factory_list_ = server.factory_list_;
   return *this;
 }
 
@@ -124,7 +112,7 @@ bool WorkflowServer::operator==(const WorkflowServer& server) const {
   if (!workflow_equal) {
     return false;
   }
-
+/*
   const auto template_equal = std::ranges::equal(
       template_list_, server.template_list_,
       [] (const auto& runner1, const auto& runner2) {
@@ -132,8 +120,8 @@ bool WorkflowServer::operator==(const WorkflowServer& server) const {
         return runner1.second && runner2.second &&
                (*runner1.second == *runner2.second);
       });
-
-  return template_equal;
+*/
+  return true;
 }
 
 void WorkflowServer::SetParameterContainer(
@@ -197,40 +185,13 @@ IWorkflow* WorkflowServer::GetWorkflow(const std::string& name) {
   return itr != workflow_list_.end() ? itr->get() : nullptr;
 }
 
-void WorkflowServer::AddTemplate(const IRunner& temp) {
-  auto runner = CreateRunner(temp);
-  if (!runner) {
-    return;
-  }
-  auto itr = template_list_.find(temp.Name());
-  if (itr == template_list_.end()) {
-    template_list_.emplace(runner->Name(), std::move(runner));
-  } else if (!IEquals(temp.Name(), temp.Template()) ) {
-    // Found a template with this name. If name and template_name is the same,
-    // it is better to get the latest template instead of the old one
-    itr->second = std::move(runner);
-  }
-}
-
-void WorkflowServer::DeleteTemplate(const IRunner* temp) {
-  auto itr = std::ranges::find_if(template_list_, [&] (const auto& item) {
-    return item.second.get() == temp;
-  });
-  if (itr != template_list_.end()) {
-    template_list_.erase(itr);
-  }
-}
-
 const IRunner* WorkflowServer::GetTemplate(const std::string& name) const {
-  const auto itr = std::ranges::find_if(template_list_, [&] (const auto& item) {
-    return item.second && IEquals(name, item.second->Name()); });
-  return itr != template_list_.cend() ? itr->second.get() : nullptr;
-}
-
-IRunner* WorkflowServer::GetTemplate(const std::string& name) {
-  auto itr = std::ranges::find_if(template_list_, [&] (const auto& item) {
-    return item.second && IEquals(name, item.second->Name()); });
-  return itr != template_list_.end() ? itr->second.get() : nullptr;
+  for ( const auto* factory : factory_list_) {
+    if (factory->HasTemplate(name)) {
+      return factory->GetTemplate(name);
+    }
+  }
+  return nullptr;
 }
 
 void WorkflowServer::Init() {
@@ -334,13 +295,6 @@ void WorkflowServer::SaveXml(IXmlNode& root) const {
       workflow->SaveXml(workflow_root);
     }
   }
-  if (!template_list_.empty()) {
-    auto& template_root = engine_root.AddNode("TemplateList");
-    for (const auto& runner : template_list_) {
-      if (!runner.second) continue;
-      runner.second->SaveXml(template_root);
-    }
-  }
 }
 
 void WorkflowServer::ReadXml(const IXmlNode& root) {
@@ -410,21 +364,6 @@ void WorkflowServer::ReadXml(const IXmlNode& root) {
       workflow_list_.emplace_back(std::move(flow));
     }
   }
-
-  // Do not clear template_list_ here.
-  const auto* template_root = engine_root->GetNode("TemplateList");
-  if (template_root != nullptr) {
-    IXmlNode::ChildList list;
-    template_root->GetChildList(list);
-    for (const auto* item : list) {
-      if (item == nullptr || !item->IsTagName("Runner")) {
-        continue;
-      }
-      auto runner = std::make_unique<IRunner>();
-      runner->ReadXml(*item);
-      template_list_.emplace(runner->Name(), std::move(runner));
-    }
-  }
 }
 
 void WorkflowServer::Clear() {
@@ -437,7 +376,6 @@ void WorkflowServer::Clear() {
     event_engine_->Clear();
   }
   workflow_list_.clear();
-  template_list_.clear();
 }
 
 void WorkflowServer::MoveUp(const IWorkflow* workflow) {
@@ -479,44 +417,31 @@ void WorkflowServer::MoveDown(const IWorkflow* workflow) {
   *itr = std::move(temp);
 }
 
-std::unique_ptr<IRunner> WorkflowServer::CreateRunner(const IRunner& source) {
-  std::unique_ptr<IRunner> runner;
-  const auto& template_name = source.Template();
-  if (IEquals(template_name, kInitDirectory.data())) {
-    auto temp = std::make_unique<InitDirectoryData>(source);
-    runner = std::move(temp);
-  } else if (IEquals(template_name, kScanDirectory.data())) {
-    auto temp = std::make_unique<ScanDirectoryData>(source);
-    runner = std::move(temp);
-  } else if (IEquals(template_name, kSyslogInput.data())) {
-    auto temp = std::make_unique<SyslogInput>(source);
-    runner = std::move(temp);
-  } else if (IEquals(template_name, kSyslogPublisher.data())) {
-    auto temp = std::make_unique<SyslogPublisher>(source);
-    runner = std::move(temp);
-  } else if (IEquals(template_name, kRunSyslogSchedule.data())) {
-    auto temp = std::make_unique<RunSyslogSchedule>(source);
-    runner = std::move(temp);
-  } else {
-    runner = std::make_unique<IRunner>(source);
-  }
-  return runner;
-}
-
-void WorkflowServer::CreateDefaultTemplates() {
-  std::array<std::unique_ptr<IRunner>,5> temp_list = {
-    std::make_unique<InitDirectoryData>(),
-    std::make_unique<ScanDirectoryData>(),
-    std::make_unique<SyslogInput>(),
-    std::make_unique<SyslogPublisher>(),
-    std::make_unique<RunSyslogSchedule>()
-        };
-
-  for (auto& temp : temp_list) {
-    if (template_list_.find(temp->Name()) == template_list_.end()) {
-      template_list_.emplace(temp->Name(),std::move(temp));
+std::unique_ptr<IRunner> WorkflowServer::CreateRunner(const IRunner &templ) const {
+  const std::string& template_name = templ.Template();
+  for (const auto* factory : factory_list_) {
+    if (factory == nullptr) {
+      continue;
+    }
+    if (factory->HasTemplate(template_name)) {
+      return factory->CreateRunner(templ);
     }
   }
+  return {};
+}
+
+void WorkflowServer::AddRunnerFactory(const IRunnerFactory &factory) {
+  // First check if factory already added
+  const std::string& name = factory.Name();
+  for (const auto* factory1 : factory_list_) {
+    if (factory1 == nullptr) {
+      continue;
+    }
+    if (factory1->Name() == name) {
+      return;
+    }
+  }
+  factory_list_.emplace_back(&factory);
 }
 
 template <>

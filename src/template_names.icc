@@ -14,4 +14,5 @@ constexpr std::string_view kScanDirectory = "ScanDirectory";
 constexpr std::string_view kSyslogInput = "SyslogInput";
 constexpr std::string_view kSyslogPublisher = "SyslogPublisher";
 constexpr std::string_view kRunSyslogSchedule = "RunSyslogSchedule";
+
 }

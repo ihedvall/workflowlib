@@ -8,18 +8,21 @@
 #include <vector>
 #include <map>
 #include <string>
+
 #include "workflow/parametercontainer.h"
 #include "workflow/eventengine.h"
 #include "workflow/iworkflow.h"
 #include "workflow/irunner.h"
+#include "workflow/irunnerfactory.h"
+
 #include <util/ixmlnode.h>
 #include <util/stringutil.h>
 
 namespace workflow {
 
 using WorkflowList = std::vector<std::unique_ptr<IWorkflow>>;
-using TemplateList = std::map<std::string, std::unique_ptr<IRunner>,
-    util::string::IgnoreCase>;
+using RunnerFactoryList = std::vector<const IRunnerFactory*>;
+
 using PropertyList = std::map<std::string, std::string,
       util::string::IgnoreCase>;
 
@@ -56,12 +59,8 @@ class WorkflowServer {
   void MoveUp(const IWorkflow* workflow);
   void MoveDown(const IWorkflow* workflow);
 
-  [[nodiscard]] TemplateList& Templates() {return template_list_;}
-  [[nodiscard]] const TemplateList& Templates() const {return template_list_;}
-  void AddTemplate(const IRunner& temp);
-  void DeleteTemplate(const IRunner* temp);
   [[nodiscard]] const IRunner* GetTemplate(const std::string& name) const;
-  [[nodiscard]] IRunner* GetTemplate(const std::string& name);
+  [[nodiscard]] std::unique_ptr<IRunner> CreateRunner(const IRunner& templ) const;
 
   virtual void Init();
   virtual void Tick();
@@ -71,10 +70,6 @@ class WorkflowServer {
   virtual void SaveXml(util::xml::IXmlNode& root) const;
 
   void Clear();
-
-  [[nodiscard]] virtual std::unique_ptr<IRunner> CreateRunner(
-      const IRunner& source);
-  virtual void CreateDefaultTemplates();
 
   [[nodiscard]] const PropertyList& ApplicationProperties() const {
     return property_list_;
@@ -95,13 +90,15 @@ class WorkflowServer {
     }
   }
 
+  void AddRunnerFactory(const IRunnerFactory& factory);
+
  private:
   std::string name_;
   std::string description_;
   std::unique_ptr<ParameterContainer> parameter_container_;
   std::unique_ptr<EventEngine> event_engine_;
   WorkflowList workflow_list_;
-  TemplateList template_list_; ///< List of available template task
+  RunnerFactoryList factory_list_; ///< List of available runner factories
   PropertyList property_list_; ///< Application tag properties
 };
 

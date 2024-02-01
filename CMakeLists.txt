@@ -43,7 +43,10 @@ add_library(workflow
         src/scandirectorydata.cpp src/scandirectorydata.h
         src/sysloginput.cpp src/sysloginput.h
         src/syslogpublisher.cpp src/syslogpublisher.h
-        src/runsyslogschedule.cpp src/runsyslogschedule.h)
+        src/runsyslogschedule.cpp src/runsyslogschedule.h
+        src/irunnerfactory.cpp include/workflow/irunnerfactory.h
+        src/defaulttemplatefactory.cpp src/defaulttemplatefactory.h
+)
 
 target_include_directories(workflow PUBLIC
         $<INSTALL_INTERFACE:include>
