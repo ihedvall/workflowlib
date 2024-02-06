@@ -59,6 +59,8 @@ class WorkflowServer {
   void MoveUp(const IWorkflow* workflow);
   void MoveDown(const IWorkflow* workflow);
 
+  [[nodiscard]] const std::vector<const IRunnerFactory*>& Factories() const;;
+  [[nodiscard]] std::map<std::string, const IRunner*> Templates() const;
   [[nodiscard]] const IRunner* GetTemplate(const std::string& name) const;
   [[nodiscard]] std::unique_ptr<IRunner> CreateRunner(const IRunner& templ) const;
 

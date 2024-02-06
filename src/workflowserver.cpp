@@ -185,6 +185,21 @@ IWorkflow* WorkflowServer::GetWorkflow(const std::string& name) {
   return itr != workflow_list_.end() ? itr->get() : nullptr;
 }
 
+
+std::map<std::string, const IRunner*> WorkflowServer::Templates() const {
+  std::map<std::string, const IRunner*> template_list;
+  for ( const auto* factory : factory_list_) {
+    if ( factory == nullptr) {
+      continue;
+    }
+    const auto& list = factory->Templates();
+    for ( const auto& itr : list) {
+      template_list.emplace(itr.first, itr.second.get());
+    }
+  }
+  return template_list;
+}
+
 const IRunner* WorkflowServer::GetTemplate(const std::string& name) const {
   for ( const auto* factory : factory_list_) {
     if (factory->HasTemplate(name)) {
@@ -442,6 +457,10 @@ void WorkflowServer::AddRunnerFactory(const IRunnerFactory &factory) {
     }
   }
   factory_list_.emplace_back(&factory);
+}
+
+const std::vector<const IRunnerFactory *> &WorkflowServer::Factories() const {
+  return factory_list_;
 }
 
 template <>
