@@ -4,15 +4,15 @@
  */
 
 #pragma once
-#include "workflow/irunner.h"
+#include "workflow/itask.h"
 
 
 namespace workflow {
 
-class RunSyslogSchedule : public IRunner {
+class RunSyslogSchedule : public ITask {
  public:
   RunSyslogSchedule();
-  explicit RunSyslogSchedule(const IRunner& source);
+  explicit RunSyslogSchedule(const ITask& source);
   void Init() override;
   void Tick() override;
 

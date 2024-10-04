@@ -111,7 +111,7 @@ void EventEngine::ReadXml(const util::xml::IXmlNode& root) {
     if (item == nullptr || !item->IsTagName("Event")) {
       continue;
     }
-    IEvent temp;
+    Event temp;
     temp.ReadXml(*item);
     AddEvent(temp);
   }
@@ -122,18 +122,18 @@ void EventEngine::Clear() {
   event_list_.clear();
 }
 
-const IEvent* EventEngine::GetEvent(const std::string& name) const {
+const Event* EventEngine::GetEvent(const std::string& name) const {
   const auto itr = event_list_.find(name);
   return itr == event_list_.cend() ? nullptr : itr->second.get();
 }
 
-IEvent* EventEngine::GetEvent(const std::string& name) {
+Event* EventEngine::GetEvent(const std::string& name) {
   auto itr = event_list_.find(name);
   return itr == event_list_.end() ? nullptr : itr->second.get();
 }
 
-void EventEngine::AddEvent(const IEvent& event) {
-  auto temp = std::make_unique<IEvent>(event);
+void EventEngine::AddEvent(const Event& event) {
+  auto temp = std::make_unique<Event>(event);
   auto itr = event_list_.find(event.Name());
   if (itr == event_list_.end()) {
     event_list_.emplace(temp->Name(), std::move(temp));
@@ -142,7 +142,7 @@ void EventEngine::AddEvent(const IEvent& event) {
   }
 }
 
-void EventEngine::DeleteEvent(const IEvent* event) {
+void EventEngine::DeleteEvent(const Event* event) {
   if (event == nullptr) {
     return;
   }
@@ -160,31 +160,31 @@ void EventEngine::DetachWorkflows() {
   }
 }
 
-std::unique_ptr<IEvent> EventEngine::MakeEvent(const IEvent& source) {
-  return std::make_unique<IEvent>(source);
+std::unique_ptr<Event> EventEngine::MakeEvent(const Event& source) {
+  return std::make_unique<Event>(source);
 }
 
 void EventEngine::AddDefaultEvents() {
- IEvent init_event;
+ Event init_event;
  init_event.Name("InitEvent"),
  init_event.Description("First event in the workflow server");
  init_event.Type(EventType::Init);
  AddEvent(init_event);
 
- IEvent exit_event;
+ Event exit_event;
  exit_event.Name("ExitEvent"),
  exit_event.Description("Last event in the workflow server");
  exit_event.Type(EventType::Exit);
  AddEvent(exit_event);
 
- IEvent cyclic_event;
+ Event cyclic_event;
  cyclic_event.Name("CyclicEvent_1s"),
  cyclic_event.Description("Event that happens cyclic each second.");
  cyclic_event.Type(EventType::Cyclic);
  cyclic_event.Period(1000);
  AddEvent(cyclic_event);
 
- IEvent periodic_event;
+ Event periodic_event;
  periodic_event.Name("PeriodicEvent_100Hz"),
  periodic_event.Description("Event that happens periodically (exactly 10Hz).");
  periodic_event.Type(EventType::Periodic);

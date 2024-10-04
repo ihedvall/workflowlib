@@ -5,16 +5,16 @@
 
 #pragma once
 
-#include "workflow/irunner.h"
+#include "workflow/itask.h"
 #include "util/isyslogserver.h"
 #include <memory>
 
 namespace workflow {
 
-class SyslogPublisher : public IRunner {
+class SyslogPublisher : public ITask {
  public:
   SyslogPublisher();
-  explicit SyslogPublisher(const IRunner& source);
+  explicit SyslogPublisher(const ITask& source);
   void Init() override;
   void Tick() override;
   void Exit() override;

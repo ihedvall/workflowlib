@@ -5,7 +5,7 @@
 
 #include <gtest/gtest.h>
 
-#include "workflow/ievent.h"
+#include "workflow/event.h"
 #include <cmath>
 #include "util/logstream.h"
 #include "util/logconfig.h"
@@ -19,11 +19,11 @@ using namespace std::chrono_literals;
 
 namespace {
 
-class MockCyclicEvent : public workflow::IEvent {
+class MockCyclicEvent : public workflow::Event {
  public:
 
   void Tick() override {
-    workflow::IEvent::Tick();
+    workflow::Event::Tick();
     ++nof_ticks;
   };
 
@@ -31,11 +31,11 @@ class MockCyclicEvent : public workflow::IEvent {
 
 };
 
-class MockPeriodicEvent : public workflow::IEvent {
+class MockPeriodicEvent : public workflow::Event {
  public:
 
   void Tick() override {
-    workflow::IEvent::Tick();
+    workflow::Event::Tick();
     ++nof_ticks;
   };
 
@@ -45,8 +45,8 @@ class MockPeriodicEvent : public workflow::IEvent {
 }
 namespace workflow::test {
 
-TEST(IEvent, TestGeneral) {
-  IEvent event;
+TEST(Event, TestGeneral) {
+  Event event;
 
   constexpr std::string_view kOrigName = "StarBuck";
   event.Name(kOrigName.data());
@@ -67,7 +67,7 @@ TEST(IEvent, TestGeneral) {
   EXPECT_STREQ(event.Parameter().c_str(), kOrigParameter.data());
 }
 
-TEST(IEvent, CyclicEvent) {
+TEST(Event, CyclicEvent) {
   auto& log_config = LogConfig::Instance();
   log_config.Type(LogType::LogToConsole);
   log_config.CreateDefaultLogger();
@@ -89,7 +89,7 @@ TEST(IEvent, CyclicEvent) {
   EXPECT_LT(period, 120);
 }
 
-TEST(IEvent, PeriodicEvent) {
+TEST(Event, PeriodicEvent) {
   auto& log_config = LogConfig::Instance();
   log_config.Type(LogType::LogToConsole);
   log_config.CreateDefaultLogger();

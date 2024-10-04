@@ -5,15 +5,15 @@
 
 #pragma once
 
-#include "workflow/irunnerfactory.h"
+#include "workflow/itaskfactory.h"
 
 namespace workflow {
 
-class DefaultTemplateFactory : public IRunnerFactory {
+class DefaultTemplateFactory : public ITaskFactory {
  public:
   DefaultTemplateFactory();
-  static const IRunnerFactory& Instance();
-  [[nodiscard]] std::unique_ptr<IRunner> CreateRunner(const IRunner& source) const override;
+  static const ITaskFactory& Instance();
+  [[nodiscard]] std::unique_ptr<ITask> CreateRunner(const ITask& source) const override;
 };
 
 } // workflow

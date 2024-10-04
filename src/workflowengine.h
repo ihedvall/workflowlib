@@ -4,11 +4,11 @@
  */
 
 #pragma once
-#include "workflow/iworkflow.h"
+#include "workflow/workflow.h"
 #include <memory>
 #include <vector>
 namespace workflow {
-using WorkflowList = std::vector<std::unique_ptr<IWorkflow>>;
+using WorkflowList = std::vector<std::unique_ptr<Workflow>>;
 class WorkflowEngine {
  public:
   [[nodiscard]] WorkflowList& Workflows() {return workflows_;}

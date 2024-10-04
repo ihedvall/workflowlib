@@ -4,14 +4,14 @@
 */
 
 #pragma once
-#include "workflow/ievent.h"
+#include "workflow/event.h"
 #include <memory>
 #include <map>
 #include <util/ixmlnode.h>
 #include <util/stringutil.h>
 namespace workflow {
 
-using EventList = std::map<std::string, std::unique_ptr<IEvent>,
+using EventList = std::map<std::string, std::unique_ptr<Event>,
     util::string::IgnoreCase>;
 
 class EventEngine {
@@ -25,10 +25,10 @@ class EventEngine {
 
   [[nodiscard]] EventList& Events() {return event_list_;}
   [[nodiscard]] const EventList& Events() const {return event_list_;}
-  [[nodiscard]] const IEvent* GetEvent(const std::string& name) const;
-  [[nodiscard]] IEvent* GetEvent(const std::string& name);
-  void AddEvent(const IEvent& event);
-  void DeleteEvent(const IEvent* event);
+  [[nodiscard]] const Event* GetEvent(const std::string& name) const;
+  [[nodiscard]] Event* GetEvent(const std::string& name);
+  void AddEvent(const Event& event);
+  void DeleteEvent(const Event* event);
 
   virtual void Init();
   virtual void Tick();
@@ -42,7 +42,7 @@ class EventEngine {
   void DetachWorkflows();
  protected:
 
-  [[nodiscard]] virtual std::unique_ptr<IEvent> MakeEvent(const IEvent&
+  [[nodiscard]] virtual std::unique_ptr<Event> MakeEvent(const Event&
                                                                 source);
   bool initialized_ = false;
  private:

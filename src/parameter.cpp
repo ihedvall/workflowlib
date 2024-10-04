@@ -3,21 +3,18 @@
 * SPDX-License-Identifier: MIT
  */
 
-#include "workflow/iparameter.h"
+#include "workflow/parameter.h"
 #include <ranges>
 #include <algorithm>
 #include <cstring>
 #include <util/stringutil.h>
-
+#include <util/ixmlnode.h>
 using namespace util::xml;
 
 namespace workflow {
 
-IParameter::~IParameter() {
 
-}
-
-IParameter::IParameter(const IParameter& parameter)
+Parameter::Parameter(const Parameter& parameter)
 : name_(parameter.name_),
   unit_(parameter.unit_),
   description_(parameter.description_),
@@ -30,7 +27,7 @@ IParameter::IParameter(const IParameter& parameter)
 {
 }
 
-bool IParameter::operator==(const IParameter& parameter) const {
+bool Parameter::operator==(const Parameter& parameter) const {
   if (name_ != parameter.name_) return false;
   if (unit_ != parameter.unit_) return false;
   if (description_ != parameter.description_) return false;
@@ -44,7 +41,7 @@ bool IParameter::operator==(const IParameter& parameter) const {
 }
 
 template <>
-bool IParameter::GetValue(bool& value) const {
+bool Parameter::GetValue(bool& value) const {
   std::scoped_lock lock(value_lock_);
   switch (DataType()) {
     case ParameterDataType::BooleanType:
@@ -130,7 +127,7 @@ bool IParameter::GetValue(bool& value) const {
 }
 
 template <>
-bool IParameter::GetValue(std::string& value) const {
+bool Parameter::GetValue(std::string& value) const {
   std::scoped_lock lock(value_lock_);
   switch (DataType()) {
     case ParameterDataType::BooleanType:
@@ -180,7 +177,7 @@ bool IParameter::GetValue(std::string& value) const {
 }
 
 template <>
-bool IParameter::GetValue(ByteArray& value) const {
+bool Parameter::GetValue(ByteArray& value) const {
   std::scoped_lock lock(value_lock_);
 
   switch (DataType()) {
@@ -232,7 +229,7 @@ bool IParameter::GetValue(ByteArray& value) const {
 }
 
 template <>
-void IParameter::SetValue(bool valid, const bool& value) {
+void Parameter::SetValue(bool valid, const bool& value) {
   std::scoped_lock lock(value_lock_);
   valid_ = valid;
 
@@ -267,7 +264,7 @@ void IParameter::SetValue(bool valid, const bool& value) {
 }
 
 template <>
-void IParameter::SetValue(bool valid, const std::string& value) {
+void Parameter::SetValue(bool valid, const std::string& value) {
   std::scoped_lock lock(value_lock_);
   valid_ = valid;
 
@@ -353,7 +350,7 @@ void IParameter::SetValue(bool valid, const std::string& value) {
 }
 
 template <>
-void IParameter::SetValue(bool valid, const ByteArray& value) {
+void Parameter::SetValue(bool valid, const ByteArray& value) {
   std::scoped_lock lock(value_lock_);
   valid_ = valid;
 
@@ -399,8 +396,8 @@ void IParameter::SetValue(bool valid, const ByteArray& value) {
   }
 }
 
-void IParameter::DataTypeAsString(const std::string& type) {
-  IParameter temp;
+void Parameter::DataTypeAsString(const std::string& type) {
+  Parameter temp;
   for (auto index = static_cast<int>(ParameterDataType::FloatType);
        index <= static_cast<int>(ParameterDataType::ByteArrayType);
        ++index) {
@@ -413,7 +410,7 @@ void IParameter::DataTypeAsString(const std::string& type) {
   }
 }
 
-std::string IParameter::DataTypeAsString() const {
+std::string Parameter::DataTypeAsString() const {
   switch (DataType()) {
     case ParameterDataType::FloatType:
        return "Float";
@@ -442,27 +439,27 @@ std::string IParameter::DataTypeAsString() const {
   return {};
 }
 
-void IParameter::Valid(bool valid) {
+void Parameter::Valid(bool valid) {
   std::scoped_lock lock(value_lock_);
   valid_ = valid;
 }
 
-bool IParameter::Valid() const {
+bool Parameter::Valid() const {
   std::scoped_lock lock(value_lock_);
   return valid_;
 }
 
-void IParameter::Init() {
+void Parameter::Init() {
   Valid(false);
 }
 
-void IParameter::Tick() {}
+void Parameter::Tick() {}
 
-void IParameter::Exit() {
+void Parameter::Exit() {
   Valid(false);
 }
 
-void IParameter::SaveXml(IXmlNode& root) const {
+void Parameter::SaveXml(IXmlNode& root) const {
   auto& parameter_root = root.AddNode("Parameter");
   parameter_root.SetAttribute("name", name_);
   if (!identity_.empty()) {
@@ -487,7 +484,7 @@ void IParameter::SaveXml(IXmlNode& root) const {
   }
 }
 
-void IParameter::ReadXml(const IXmlNode& root) {
+void Parameter::ReadXml(const IXmlNode& root) {
   name_ = root.Property<std::string>("Name");
   unit_ = root.Property<std::string>("Unit");
   description_ = root.Property<std::string>("Description");

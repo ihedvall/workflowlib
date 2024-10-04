@@ -10,12 +10,12 @@
 #include <vector>
 #include <thread>
 
-#include "workflow/irunner.h"
+#include "workflow/itask.h"
 #include <util/ixmlnode.h>
 
 namespace workflow {
 
-class IWorkflow;
+class Workflow;
 
 
 /**
@@ -43,21 +43,21 @@ enum class EventType {
 };
 
 /**
- * @class IEvent
+ * @class Event
  *
- * @brief The IEvent class represents an event in a workflow system.
+ * @brief The Event class represents an event in a workflow system.
  *
- * IEvent is the base class for all types of events that can occur within a workflow system.
+ * Event is the base class for all types of events that can occur within a workflow system.
  * It provides basic functionality and properties that every event should have.
  *
  * Each event has a name, description, type, period, parameter, and attached workflows.
  */
-class IEvent {
+class Event {
  public:
-  IEvent() = default; ///< Default constructor
-  virtual ~IEvent();  ///< Destructor
-  IEvent(const IEvent& event); ///< Default copy constructor
-  [[nodiscard]] bool operator == (const IEvent& event) const; ///< Compares 2 events
+  Event() = default; ///< Default constructor
+  virtual ~Event();  ///< Destructor
+  Event(const Event& event); ///< Default copy constructor
+  [[nodiscard]] bool operator == (const Event& event) const; ///< Compares 2 events
 
   /**
    * @brief Set the name of the event.
@@ -178,7 +178,7 @@ class IEvent {
   virtual void Tick();
   virtual void Exit();
 
-  void AttachWorkflow(IWorkflow* workflow);
+  void AttachWorkflow(Workflow* workflow);
   void DetachWorkflows();
 
  protected:
@@ -189,7 +189,7 @@ class IEvent {
   std::string parameter_;
   uint64_t period_ = 1000; ///< Period in ms
   EventType type_ = EventType::Cyclic;
-  std::vector<IWorkflow*> workflow_list_;
+  std::vector<Workflow*> workflow_list_;
 
   std::thread working_thread_;
   std::atomic<bool> stop_thread_ = true;

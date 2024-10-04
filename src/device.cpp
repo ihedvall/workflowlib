@@ -3,13 +3,15 @@
 * SPDX-License-Identifier: MIT
  */
 
-#include "workflow/idevice.h"
+#include "workflow/device.h"
+#include <util/ixmlnode.h>
+#include <util/stringutil.h>
 
 using namespace util::xml;
 
 namespace workflow {
 
-void IDevice::SaveXml(IXmlNode& root) const {
+void Device::SaveXml(IXmlNode& root) const {
   auto& device_root = root.AddNode("Device");
 
   device_root.SetAttribute("name", name_);
@@ -22,12 +24,16 @@ void IDevice::SaveXml(IXmlNode& root) const {
   device_root.SetProperty("Bus", bus_);
 }
 
-void IDevice::ReadXml(const IXmlNode& root) {
+void Device::ReadXml(const IXmlNode& root) {
   name_ = root.Property<std::string>("Name");
   description_ = root.Property<std::string>("Description");
   identity_ = root.Property<int>("Identity");
   protocol_ = root.Property<std::string>("Protocol");
   bus_ = root.Property<std::string>("Bus");
+}
+
+bool Device::operator<(const Device &device) const {
+  return name_ < device.name_;
 }
 
 }  // namespace workflow

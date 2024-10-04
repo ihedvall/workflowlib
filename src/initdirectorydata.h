@@ -5,15 +5,15 @@
 
 #pragma once
 
-#include "workflow/irunner.h"
+#include "workflow/itask.h"
 
 namespace workflow {
 
 
-class InitDirectoryData : public IRunner {
+class InitDirectoryData : public ITask {
  public:
   InitDirectoryData();
-  explicit InitDirectoryData(const IRunner& source);
+  explicit InitDirectoryData(const ITask& source);
   void Init() override;
   void Tick() override;
  private:

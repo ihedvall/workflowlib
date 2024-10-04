@@ -7,7 +7,8 @@ project(TestWorkflow
         LANGUAGES CXX)
 
 add_executable(test_workflow
-        test_parameter.cpp test_parameter_container.cpp test_event.cpp test_runner.cpp test_workflowserver.cpp)
+        test_parameter.cpp test_parameter_container.cpp test_event.cpp test_runner.cpp test_workflowserver.cpp
+        test_device.cpp)
 
 target_include_directories(test_workflow PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/../include
@@ -23,7 +24,7 @@ endif ()
 
 target_link_libraries(test_workflow PRIVATE workflow)
 target_link_libraries(test_workflow PRIVATE util)
-target_link_libraries(test_workflow PRIVATE ${EXPAT_LIBRARIES})
+target_link_libraries(test_workflow PRIVATE EXPAT::EXPAT)
 target_link_libraries(test_workflow PRIVATE ${Boost_LIBRARIES})
 target_link_libraries(test_workflow PRIVATE GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
 

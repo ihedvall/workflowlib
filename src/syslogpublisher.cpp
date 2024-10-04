@@ -8,7 +8,7 @@
 #include <vector>
 #include <util/syslogmessage.h>
 #include <util/utilfactory.h>
-#include "workflow/iworkflow.h"
+#include "workflow/workflow.h"
 
 #include "template_names.icc"
 
@@ -28,14 +28,14 @@ SyslogPublisher::SyslogPublisher() {
   Arguments(temp.str());
 }
 
-SyslogPublisher::SyslogPublisher(const IRunner& source)
-    : IRunner(source) {
+SyslogPublisher::SyslogPublisher(const ITask& source)
+    : ITask(source) {
   Template(kSyslogPublisher.data());
   ParseArguments();
 }
 
 void SyslogPublisher::Init() {
-  IRunner::Init();
+  ITask::Init();
   ParseArguments();
 
   auto temp = util::UtilFactory::CreateSyslogServer(
@@ -59,7 +59,7 @@ void SyslogPublisher::Init() {
 }
 
 void SyslogPublisher::Tick() {
-  IRunner::Tick();
+  ITask::Tick();
   auto* workflow = GetWorkflow();
   if (workflow == nullptr) {
     return;
@@ -82,7 +82,7 @@ void SyslogPublisher::Exit() {
   if (workflow != nullptr) {
     workflow->ClearData();
   }
-  IRunner::Exit();
+  ITask::Exit();
 }
 
 void SyslogPublisher::ParseArguments() {

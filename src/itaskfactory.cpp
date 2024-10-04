@@ -3,21 +3,21 @@
 * SPDX-License-Identifier: MIT
  */
 
-#include "workflow/irunnerfactory.h"
+#include "workflow/itaskfactory.h"
 
 namespace workflow {
 
-bool IRunnerFactory::HasTemplate(const std::string &name) const {
+bool ITaskFactory::HasTemplate(const std::string &name) const {
   auto itr = template_list_.find(name);
   return itr != template_list_.cend();
 }
 
-const IRunner *IRunnerFactory::GetTemplate(const std::string &name) const {
+const ITask *ITaskFactory::GetTemplate(const std::string &name) const {
   auto itr = template_list_.find(name);
   return itr != template_list_.cend() ? itr->second.get() : nullptr;
 }
 
-IRunner *IRunnerFactory::GetTemplate(const std::string &name) {
+ITask *ITaskFactory::GetTemplate(const std::string &name) {
   auto itr = template_list_.find(name);
   return itr != template_list_.end() ? itr->second.get() : nullptr;
 }

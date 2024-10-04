@@ -8,13 +8,19 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "workflow/iparameter.h"
-#include "workflow/idevice.h"
-#include <util/ixmlnode.h>
+#include <utility>
+#include "workflow/parameter.h"
+#include "workflow/device.h"
+namespace util::xml {
+
+class IXmlNode;
+
+} // end namespace util::xml
 
 namespace workflow {
-using DeviceList = std::map<std::string, std::unique_ptr<IDevice>>;
-using ParameterList = std::multimap<std::string, std::unique_ptr<IParameter>>;
+
+using DeviceList = std::vector<std::unique_ptr<Device>>;
+using ParameterList = std::vector<std::unique_ptr<Parameter>>;
 
 class ParameterContainer {
  public:
@@ -22,9 +28,6 @@ class ParameterContainer {
   virtual ~ParameterContainer() = default;
   ParameterContainer(const ParameterContainer& container);
   [[nodiscard]] bool operator == (const ParameterContainer& container) const;
-
-  void UniqueName(bool unique) {unique_name_ = unique;}
-  [[nodiscard]] bool UniqueName() const {return unique_name_;}
 
   void IgnoreCase(bool ignore) {ignore_case_name_ = ignore; }
   [[nodiscard]] bool IgnoreCase() const {return ignore_case_name_;}
@@ -39,21 +42,23 @@ class ParameterContainer {
 
   [[nodiscard]] std::vector<std::string> Units() const;
 
-  template <typename T>
-  void ParametersByType(std::vector<T*>& list) const;
+  //template <typename T>
+  //void ParametersByType(std::vector<T*>& list) const;
 
-  IDevice* AddDevice(std::unique_ptr<IDevice>& device);
-  [[nodiscard]] IDevice* GetDevice(const std::string& name) const;
-  void DeleteDevice(const IDevice& device);
+  Device* CreateDevice(const std::string& device_name);
+  [[nodiscard]] Device* GetDevice(const std::string& name) const;
   void DeleteDevice(const std::string& name);
 
-  IParameter* AddParameter(std::unique_ptr<IParameter>& parameter);
-  [[nodiscard]] IParameter* GetParameter(const std::string& name) const;
-  void DeleteParameter(const IParameter& parameter);
-  void DeleteParameter(const std::string& name);
+  Parameter* CreateParameter(const std::string& device_name,
+                             const std::string& parameter_name);
+  [[nodiscard]] Parameter* GetParameter(const std::string& device,
+                                        const std::string& name) const;
+  void DeleteParameter(const std::string& device_name,
+                       const std::string& parameter_name);
 
   void Clear();
   [[nodiscard]] bool Empty() const;
+  void Sort();
 
   virtual void Init();
   virtual void Tick();
@@ -65,14 +70,14 @@ class ParameterContainer {
  private:
   DeviceList device_list_;
   ParameterList parameter_list_;
-  bool unique_name_ = false;
+
   bool ignore_case_name_ = false;
 };
-
+/*
 template <typename T>
 void ParameterContainer::ParametersByType(std::vector<T*>& list) const {
-  for (const auto& itr : parameter_list_) {
-    auto* par = itr.second.get();
+  for (const auto& parameter : parameter_list_) {
+    auto* par = parameter.get();
     if (par == nullptr) {
       continue;
     }
@@ -82,5 +87,5 @@ void ParameterContainer::ParametersByType(std::vector<T*>& list) const {
     }
   }
 }
-
+*/
 }  // namespace workflow

@@ -25,7 +25,7 @@ BOOST_DLL_ALIAS(workflow::DefaultTemplateFactory::Instance, GetRunnerFactory)
 
 namespace workflow {
 
-const IRunnerFactory &DefaultTemplateFactory::Instance() {
+const ITaskFactory &DefaultTemplateFactory::Instance() {
   static DefaultTemplateFactory default_template_factory;
   return default_template_factory;
 }
@@ -34,7 +34,7 @@ DefaultTemplateFactory::DefaultTemplateFactory() {
   name_ = "Default";
   description_ = "Default runner templates";
 
-  std::array<std::unique_ptr<IRunner>,5> temp_list = {
+  std::array<std::unique_ptr<ITask>, 5> temp_list = {
       std::make_unique<InitDirectoryData>(),
       std::make_unique<ScanDirectoryData>(),
       std::make_unique<SyslogInput>(),
@@ -49,8 +49,8 @@ DefaultTemplateFactory::DefaultTemplateFactory() {
   }
 }
 
-std::unique_ptr<IRunner> DefaultTemplateFactory::CreateRunner(const IRunner &source) const {
-  std::unique_ptr<IRunner> runner;
+std::unique_ptr<ITask> DefaultTemplateFactory::CreateRunner(const ITask &source) const {
+  std::unique_ptr<ITask> runner;
   const auto& template_name = source.Template();
   if (IEquals(template_name, kInitDirectory.data())) {
     auto temp = std::make_unique<InitDirectoryData>(source);
@@ -68,7 +68,7 @@ std::unique_ptr<IRunner> DefaultTemplateFactory::CreateRunner(const IRunner &sou
     auto temp = std::make_unique<RunSyslogSchedule>(source);
     runner = std::move(temp);
   } else {
-    runner = std::make_unique<IRunner>(source);
+    runner = std::make_unique<ITask>(source);
   }
   return runner;
 }

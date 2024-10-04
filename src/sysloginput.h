@@ -4,16 +4,16 @@
  */
 
 #pragma once
-#include "workflow/irunner.h"
+#include "workflow/itask.h"
 #include "util/isyslogserver.h"
 #include <memory>
 
 namespace workflow {
 
-class SyslogInput : public IRunner {
+class SyslogInput : public ITask {
  public:
   SyslogInput();
-  explicit SyslogInput(const IRunner& source);
+  explicit SyslogInput(const ITask& source);
   void Init() override;
   void Tick() override;
   void Exit() override;

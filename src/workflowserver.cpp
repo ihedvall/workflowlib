@@ -43,7 +43,7 @@ WorkflowServer::WorkflowServer(const WorkflowServer& server)
     if (!workflow) {
       continue;
     }
-    auto temp = std::make_unique<IWorkflow>(*workflow);
+    auto temp = std::make_unique<Workflow>(*workflow);
     workflow_list_.push_back(std::move(temp));
   }
   factory_list_ = server.factory_list_;
@@ -74,7 +74,7 @@ WorkflowServer& WorkflowServer::operator=(const WorkflowServer& server) {
   workflow_list_.clear();
   for (const auto& workflow : server.workflow_list_) {
     if (!workflow) continue;
-    auto temp = std::make_unique<IWorkflow>(*workflow);
+    auto temp = std::make_unique<Workflow>(*workflow);
     workflow_list_.push_back(std::move(temp));
   }
 
@@ -150,8 +150,8 @@ const EventEngine* WorkflowServer::GetEventEngine() const {
   return event_engine_.get();
 }
 
-void WorkflowServer::AddWorkflow(const IWorkflow& workflow) {
-  auto temp = std::make_unique<IWorkflow>(workflow);
+void WorkflowServer::AddWorkflow(const Workflow& workflow) {
+  auto temp = std::make_unique<Workflow>(workflow);
   auto itr = std::ranges::find_if(workflow_list_, [&] (const auto& item) {
      return item && util::string::IEquals(item->Name(), workflow.Name());
   });
@@ -162,7 +162,7 @@ void WorkflowServer::AddWorkflow(const IWorkflow& workflow) {
   }
 }
 
-void WorkflowServer::DeleteWorkflow(const IWorkflow* workflow) {
+void WorkflowServer::DeleteWorkflow(const Workflow* workflow) {
   auto itr = std::ranges::find_if(workflow_list_, [&] (const auto& item) {
     return item.get() == workflow;
   });
@@ -171,14 +171,14 @@ void WorkflowServer::DeleteWorkflow(const IWorkflow* workflow) {
   }
 }
 
-const IWorkflow* WorkflowServer::GetWorkflow(const std::string& name) const {
+const Workflow* WorkflowServer::GetWorkflow(const std::string& name) const {
   const auto itr = std::ranges::find_if(workflow_list_,
         [&] (const auto& workflow) {
         return workflow && IEquals(name, workflow->Name()); });
   return itr != workflow_list_.cend() ? itr->get() : nullptr;
 }
 
-IWorkflow* WorkflowServer::GetWorkflow(const std::string& name) {
+Workflow* WorkflowServer::GetWorkflow(const std::string& name) {
   auto itr = std::ranges::find_if(workflow_list_,
                                         [&] (const auto& workflow) {
                                           return workflow && IEquals(name, workflow->Name()); });
@@ -186,8 +186,8 @@ IWorkflow* WorkflowServer::GetWorkflow(const std::string& name) {
 }
 
 
-std::map<std::string, const IRunner*> WorkflowServer::Templates() const {
-  std::map<std::string, const IRunner*> template_list;
+std::map<std::string, const ITask*> WorkflowServer::Templates() const {
+  std::map<std::string, const ITask*> template_list;
   for ( const auto* factory : factory_list_) {
     if ( factory == nullptr) {
       continue;
@@ -200,7 +200,7 @@ std::map<std::string, const IRunner*> WorkflowServer::Templates() const {
   return template_list;
 }
 
-const IRunner* WorkflowServer::GetTemplate(const std::string& name) const {
+const ITask* WorkflowServer::GetTemplate(const std::string& name) const {
   for ( const auto* factory : factory_list_) {
     if (factory->HasTemplate(name)) {
       return factory->GetTemplate(name);
@@ -374,7 +374,7 @@ void WorkflowServer::ReadXml(const IXmlNode& root) {
       if (workflow == nullptr || !workflow->IsTagName("Workflow")) {
         continue;
       }
-      auto flow = std::make_unique<IWorkflow>(this);
+      auto flow = std::make_unique<Workflow>(this);
       flow->ReadXml(*workflow);
       workflow_list_.emplace_back(std::move(flow));
     }
@@ -393,7 +393,7 @@ void WorkflowServer::Clear() {
   workflow_list_.clear();
 }
 
-void WorkflowServer::MoveUp(const IWorkflow* workflow) {
+void WorkflowServer::MoveUp(const Workflow* workflow) {
   if (workflow == nullptr || workflow_list_.size() <= 1) {
     return;
   }
@@ -411,7 +411,7 @@ void WorkflowServer::MoveUp(const IWorkflow* workflow) {
   *itr = std::move(temp);
 }
 
-void WorkflowServer::MoveDown(const IWorkflow* workflow) {
+void WorkflowServer::MoveDown(const Workflow* workflow) {
   if (workflow == nullptr || workflow_list_.size() <= 1) {
     return;
   }
@@ -432,7 +432,7 @@ void WorkflowServer::MoveDown(const IWorkflow* workflow) {
   *itr = std::move(temp);
 }
 
-std::unique_ptr<IRunner> WorkflowServer::CreateRunner(const IRunner &templ) const {
+std::unique_ptr<ITask> WorkflowServer::CreateRunner(const ITask &templ) const {
   const std::string& template_name = templ.Template();
   for (const auto* factory : factory_list_) {
     if (factory == nullptr) {
@@ -445,7 +445,7 @@ std::unique_ptr<IRunner> WorkflowServer::CreateRunner(const IRunner &templ) cons
   return {};
 }
 
-void WorkflowServer::AddRunnerFactory(const IRunnerFactory &factory) {
+void WorkflowServer::AddTaskFactory(const ITaskFactory &factory) {
   // First check if factory already added
   const std::string& name = factory.Name();
   for (const auto* factory1 : factory_list_) {
@@ -459,7 +459,7 @@ void WorkflowServer::AddRunnerFactory(const IRunnerFactory &factory) {
   factory_list_.emplace_back(&factory);
 }
 
-const std::vector<const IRunnerFactory *> &WorkflowServer::Factories() const {
+const std::vector<const ITaskFactory *> &WorkflowServer::Factories() const {
   return factory_list_;
 }
 

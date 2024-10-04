@@ -11,17 +11,17 @@
 
 #include "workflow/parametercontainer.h"
 #include "workflow/eventengine.h"
-#include "workflow/iworkflow.h"
-#include "workflow/irunner.h"
-#include "workflow/irunnerfactory.h"
+#include "workflow/workflow.h"
+#include "workflow/itask.h"
+#include "workflow/itaskfactory.h"
 
 #include <util/ixmlnode.h>
 #include <util/stringutil.h>
 
 namespace workflow {
 
-using WorkflowList = std::vector<std::unique_ptr<IWorkflow>>;
-using RunnerFactoryList = std::vector<const IRunnerFactory*>;
+using WorkflowList = std::vector<std::unique_ptr<Workflow>>;
+using TaskFactoryList = std::vector<const ITaskFactory*>;
 
 using PropertyList = std::map<std::string, std::string,
       util::string::IgnoreCase>;
@@ -51,18 +51,18 @@ class WorkflowServer {
 
   [[nodiscard]] WorkflowList& Workflows() {return workflow_list_;}
   [[nodiscard]] const WorkflowList& Workflows() const {return workflow_list_;}
-  void AddWorkflow(const IWorkflow& workflow);
-  void DeleteWorkflow(const IWorkflow* workflow);
-  [[nodiscard]] const IWorkflow* GetWorkflow(const std::string& name) const;
-  [[nodiscard]] IWorkflow* GetWorkflow(const std::string& name);
+  void AddWorkflow(const Workflow& workflow);
+  void DeleteWorkflow(const Workflow* workflow);
+  [[nodiscard]] const Workflow* GetWorkflow(const std::string& name) const;
+  [[nodiscard]] Workflow* GetWorkflow(const std::string& name);
 
-  void MoveUp(const IWorkflow* workflow);
-  void MoveDown(const IWorkflow* workflow);
+  void MoveUp(const Workflow* workflow);
+  void MoveDown(const Workflow* workflow);
 
-  [[nodiscard]] const std::vector<const IRunnerFactory*>& Factories() const;;
-  [[nodiscard]] std::map<std::string, const IRunner*> Templates() const;
-  [[nodiscard]] const IRunner* GetTemplate(const std::string& name) const;
-  [[nodiscard]] std::unique_ptr<IRunner> CreateRunner(const IRunner& templ) const;
+  [[nodiscard]] const std::vector<const ITaskFactory*>& Factories() const;;
+  [[nodiscard]] std::map<std::string, const ITask*> Templates() const;
+  [[nodiscard]] const ITask* GetTemplate(const std::string& name) const;
+  [[nodiscard]] std::unique_ptr<ITask> CreateRunner(const ITask& templ) const;
 
   virtual void Init();
   virtual void Tick();
@@ -92,7 +92,7 @@ class WorkflowServer {
     }
   }
 
-  void AddRunnerFactory(const IRunnerFactory& factory);
+  void AddTaskFactory(const ITaskFactory& factory);
 
  private:
   std::string name_;
@@ -100,7 +100,7 @@ class WorkflowServer {
   std::unique_ptr<ParameterContainer> parameter_container_;
   std::unique_ptr<EventEngine> event_engine_;
   WorkflowList workflow_list_;
-  RunnerFactoryList factory_list_; ///< List of available runner factories
+  TaskFactoryList factory_list_; ///< List of available task factories
   PropertyList property_list_; ///< Application tag properties
 };
 

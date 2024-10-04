@@ -3,16 +3,16 @@
 * SPDX-License-Identifier: MIT
  */
 
-#include "workflow/irunner.h"
+#include "workflow/itask.h"
 #include <util/stringutil.h>
 #include <algorithm>
-#include "workflow/iworkflow.h"
+#include "workflow/workflow.h"
 
 using namespace util::xml;
 using namespace util::string;
 
 namespace workflow {
-IRunner::IRunner(const IRunner& source)
+ITask::ITask(const ITask& source)
 : name_(source.name_),
   description_(source.description_),
   documentation_(source.documentation_),
@@ -23,7 +23,7 @@ IRunner::IRunner(const IRunner& source)
   parameter_list_(source.parameter_list_) {
 }
 
-bool IRunner::operator==(const IRunner& runner) const {
+bool ITask::operator==(const ITask& runner) const {
   if (name_ != runner.name_) return false;
   if (description_ != runner.description_) return false;
   if (documentation_ != runner.documentation_) return false;
@@ -40,12 +40,12 @@ bool IRunner::operator==(const IRunner& runner) const {
       });
   return list_equal;
 }
-void IRunner::TypeAsString(const std::string& type) {
-  IRunner temp;
-  for (auto index = static_cast<int>(RunnerType::InternalRunner);
-       index <= static_cast<int>(RunnerType::PythonRunner);
+void ITask::TypeAsString(const std::string& type) {
+  ITask temp;
+  for (auto index = static_cast<int>(TaskType::InternalTask);
+       index <= static_cast<int>(TaskType::PythonTask);
        ++index) {
-    temp.Type(static_cast<RunnerType>(index));
+    temp.Type(static_cast<TaskType>(index));
     const auto type_string = temp.TypeAsString();
     if (util::string::IEquals(type, type_string)) {
       Type(temp.Type());
@@ -54,21 +54,21 @@ void IRunner::TypeAsString(const std::string& type) {
   }
 }
 
-std::string IRunner::TypeAsString() const {
+std::string ITask::TypeAsString() const {
   switch (Type()) {
-    case RunnerType::InternalRunner:
+    case TaskType::InternalTask:
       return "Internal";
 
-    case RunnerType::DllRunner:
+    case TaskType::DllTask:
       return "DLL";
 
-    case RunnerType::ExeRunner:
+    case TaskType::ExeTask:
       return "Executable";
 
-    case RunnerType::LuaRunner:
+    case TaskType::LuaTask:
       return "Lua";
 
-    case RunnerType::PythonRunner:
+    case TaskType::PythonTask:
       return "Python";
 
     default:
@@ -77,15 +77,15 @@ std::string IRunner::TypeAsString() const {
   return {};
 }
 
-void IRunner::Init() {
+void ITask::Init() {
   is_ok_ = true;
 }
 
-void IRunner::Tick() {}
-void IRunner::Exit() {}
+void ITask::Tick() {}
+void ITask::Exit() {}
 
-void IRunner::SaveXml(IXmlNode& root) const {
-  auto& runner_root = root.AddNode("Runner");
+void ITask::SaveXml(IXmlNode& root) const {
+  auto& runner_root = root.AddNode("Task");
   runner_root.SetAttribute("name", name_);
 
   runner_root.SetProperty("Name", name_);
@@ -97,7 +97,7 @@ void IRunner::SaveXml(IXmlNode& root) const {
   runner_root.SetProperty("Period", period_);
 }
 
-void IRunner::ReadXml(const IXmlNode& root) {
+void ITask::ReadXml(const IXmlNode& root) {
   name_ = root.Property<std::string>("Name");
   description_ = root.Property<std::string>("Description");
   documentation_ = root.Property<std::string>("Documentation");
@@ -107,12 +107,12 @@ void IRunner::ReadXml(const IXmlNode& root) {
   period_ = root.Property<double>("Period");
 }
 
-void IRunner::AttachWorkflow(IWorkflow* workflow) {
+void ITask::AttachWorkflow(Workflow* workflow) {
   workflow_ = workflow;
 }
 
-const IRunner* IRunner::GetRunnerByTemplateName(const std::string& name) const {
-  return workflow_ != nullptr ? workflow_->GetRunnerByTemplateName(name) :
+const ITask* ITask::GetTaskByTemplateName(const std::string& name) const {
+  return workflow_ != nullptr ? workflow_->GetTaskByTemplateName(name) :
     nullptr;
 }
 

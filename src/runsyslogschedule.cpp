@@ -7,7 +7,7 @@
 #include <boost/program_options.hpp>
 #include <vector>
 #include <util/syslogmessage.h>
-#include "workflow/iworkflow.h"
+#include "workflow/workflow.h"
 
 #include "template_names.icc"
 
@@ -28,20 +28,20 @@ RunSyslogSchedule::RunSyslogSchedule() {
   Arguments(temp.str());
 }
 
-RunSyslogSchedule::RunSyslogSchedule(const IRunner& source)
-    : IRunner(source) {
+RunSyslogSchedule::RunSyslogSchedule(const ITask& source)
+    : ITask(source) {
   Template(kRunSyslogSchedule.data());
   ParseArguments();
 }
 
 void RunSyslogSchedule::Init() {
-  IRunner::Init();
+  ITask::Init();
   ParseArguments();
   IsOk(true);
 }
 
 void RunSyslogSchedule::Tick() {
-  IRunner::Tick();
+  ITask::Tick();
   auto* workflow = GetWorkflow();
   if (workflow == nullptr) {
     LastError("No workflow found");

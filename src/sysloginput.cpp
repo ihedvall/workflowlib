@@ -9,7 +9,7 @@
 #include <util/syslogmessage.h>
 #include <util/stringutil.h>
 #include <util/utilfactory.h>
-#include "workflow/iworkflow.h"
+#include "workflow/workflow.h"
 
 #include "template_names.icc"
 
@@ -33,14 +33,14 @@ SyslogInput::SyslogInput() {
   Arguments(temp.str());
 }
 
-SyslogInput::SyslogInput(const IRunner& source)
-    : IRunner(source) {
+SyslogInput::SyslogInput(const ITask& source)
+    : ITask(source) {
   Template(kSyslogInput.data());
   ParseArguments();
 }
 
 void SyslogInput::Init() {
-  IRunner::Init();
+  ITask::Init();
   ParseArguments();
   if (IEquals(type_, "TCP")) {
     auto temp = util::UtilFactory::CreateSyslogServer(
@@ -68,7 +68,7 @@ void SyslogInput::Init() {
 }
 
 void SyslogInput::Tick() {
-  IRunner::Tick();
+  ITask::Tick();
   auto* workflow = GetWorkflow();
   auto* syslog_list = workflow != nullptr ?
                           workflow->GetData<SyslogList>() :
@@ -94,7 +94,7 @@ void SyslogInput::Exit() {
   if (workflow != nullptr) {
     workflow->ClearData();
   }
-  IRunner::Exit();
+  ITask::Exit();
 }
 
 void SyslogInput::ParseArguments() {

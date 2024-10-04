@@ -9,7 +9,7 @@
 #include <filesystem>
 #include <sstream>
 #include <util/idirectory.h>
-#include "workflow/iworkflow.h"
+#include "workflow/workflow.h"
 
 using namespace boost::program_options;
 using namespace std::filesystem;
@@ -26,19 +26,19 @@ ScanDirectoryData::ScanDirectoryData() {
   Arguments(temp.str());
 }
 
-ScanDirectoryData::ScanDirectoryData(const IRunner& source)
-    : IRunner(source) {
+ScanDirectoryData::ScanDirectoryData(const ITask& source)
+    : ITask(source) {
   Template(kScanDirectory.data());
   ParseArguments();
 }
 
 void ScanDirectoryData::Init() {
-  IRunner::Init();
+  ITask::Init();
   ParseArguments();
 }
 
 void ScanDirectoryData::Tick() {
-  IRunner::Tick();
+  ITask::Tick();
 
   // Check that the workflow is attached
   auto* workflow = GetWorkflow();

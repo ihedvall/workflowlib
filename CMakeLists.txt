@@ -17,6 +17,7 @@ set(CMAKE_DEBUG_POSTFIX d)
 include(CMakePrintHelpers)
 include(script/utillib.cmake)
 include(script/boost.cmake)
+include(script/expat.cmake)
 
 if (WORKFLOW_TEST)
     include(script/googletest.cmake)
@@ -30,21 +31,21 @@ endif()
 
 add_library(workflow
         src/eventengine.cpp include/workflow/eventengine.h
-        src/ievent.cpp include/workflow/ievent.h
-        src/iworkflow.cpp include/workflow/iworkflow.h
+        src/event.cpp include/workflow/event.h
+        src/workflow.cpp include/workflow/workflow.h
         src/workflowengine.cpp src/workflowengine.h
-        src/irunner.cpp include/workflow/irunner.h
-        src/iparameter.cpp include/workflow/iparameter.h
+        src/itask.cpp include/workflow/itask.h
+        src/parameter.cpp include/workflow/parameter.h
         src/parametercontainer.cpp include/workflow/parametercontainer.h
         src/workflowserver.cpp include/workflow/workflowserver.h
-        src/idevice.cpp include/workflow/idevice.h
+        src/device.cpp include/workflow/device.h
         src/initdirectorydata.cpp src/initdirectorydata.h
         src/template_names.icc
         src/scandirectorydata.cpp src/scandirectorydata.h
         src/sysloginput.cpp src/sysloginput.h
         src/syslogpublisher.cpp src/syslogpublisher.h
         src/runsyslogschedule.cpp src/runsyslogschedule.h
-        src/irunnerfactory.cpp include/workflow/irunnerfactory.h
+        src/itaskfactory.cpp include/workflow/itaskfactory.h
         src/defaulttemplatefactory.cpp src/defaulttemplatefactory.h
 )
 

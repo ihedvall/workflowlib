@@ -5,13 +5,19 @@
 
 #pragma once
 #include <string>
-#include <util/ixmlnode.h>
+
+namespace util::xml {
+
+class IXmlNode;
+
+} // end namespace util::xml
 
 namespace workflow {
 
-class IDevice {
+class Device {
  public:
-  [[nodiscard]] bool operator== (const IDevice& device) const = default;
+  [[nodiscard]] bool operator == (const Device& device) const = default;
+  [[nodiscard]] bool operator < (const Device& device) const;
 
   void Name(const std::string& name) {name_ = name;}
   [[nodiscard]] const std::string& Name() const {return name_;}
@@ -22,14 +28,14 @@ class IDevice {
   void Identity(int identity) {identity_ = identity;}
   [[nodiscard]] int Identity() const {return identity_;}
 
-  void Protocol(const std::string& protocol) {protocol_ = protocol;}
-  [[nodiscard]] const std::string& Protocol() const {return protocol_;}
+  void Protocol(const std::string& protocol) { protocol_ = protocol; }
+  [[nodiscard]] const std::string& Protocol() const { return protocol_; }
 
-  void Bus(const std::string& bus) {bus_ = bus;}
-  [[nodiscard]] const std::string& Bus() const {return bus_;}
+  void Bus(const std::string& bus) { bus_ = bus; }
+  [[nodiscard]] const std::string& Bus() const { return bus_; }
 
-  virtual void SaveXml(util::xml::IXmlNode& root) const;
-  virtual void ReadXml(const util::xml::IXmlNode& root);
+  void SaveXml(util::xml::IXmlNode& root) const;
+  void ReadXml(const util::xml::IXmlNode& root);
 
  private:
   std::string name_;

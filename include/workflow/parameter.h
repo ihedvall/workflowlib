@@ -14,9 +14,15 @@
 #include <mutex>
 #pragma managed(pop)
 
-#include <util/ixmlnode.h>
+namespace util::xml {
+
+class IXmlNode;
+
+} // end namespace util::xml
+
 
 namespace workflow {
+
 enum class ParameterDataType : int {
   FloatType = 0, ///< 64-bit floating point
   SignedType,
@@ -31,13 +37,13 @@ using ByteArray = std::vector<uint8_t>;
 using EnumList = std::map<int64_t, std::string>;
 
 
-class IParameter {
+class Parameter {
  public:
-  IParameter() = default;
-  virtual ~IParameter();
+  Parameter() = default;
+  virtual ~Parameter() = default;
 
-  IParameter(const IParameter& parameter);
-  [[nodiscard]] bool operator == (const IParameter& parameter) const;
+  Parameter(const Parameter& parameter);
+  [[nodiscard]] bool operator == (const Parameter& parameter) const;
 
   void Name(const std::string& name) { name_ = name; }
   [[nodiscard]] const std::string& Name() const { return name_; }
@@ -76,7 +82,7 @@ class IParameter {
   [[nodiscard]] bool Valid() const;
 
   template <typename T>
-  bool GetValue(T& value) const;
+  [[nodiscard]] bool GetValue(T& value) const;
 
   template <typename T>
   void SetValue(bool valid, const T& value);
@@ -91,7 +97,7 @@ class IParameter {
  private:
   std::string name_; ///< Name used internally
   std::string unit_; ///< Unit of measure
-  std::string description_; ///< optional description of the parameter
+  std::string description_; ///< Optional description of the parameter
   std::string device_; ///< Test equipment reference
   std::string signal_; ///< Signal or channel name
   std::string identity_; ///< Free of use but normally external ID
@@ -112,7 +118,7 @@ class IParameter {
 };
 
 template <typename T>
-bool IParameter::GetValue(T& value) const {
+bool Parameter::GetValue(T& value) const {
   std::scoped_lock lock(value_lock_);
   switch (data_type_) {
     case ParameterDataType::UnsignedType:
@@ -146,16 +152,16 @@ bool IParameter::GetValue(T& value) const {
 }
 
 template <>
-bool IParameter::GetValue(bool& value) const;
+bool Parameter::GetValue(bool& value) const;
 
 template <>
-bool IParameter::GetValue(std::string& value) const;
+bool Parameter::GetValue(std::string& value) const;
 
 template <>
-bool IParameter::GetValue(ByteArray& value) const;
+bool Parameter::GetValue(ByteArray& value) const;
 
 template <typename T>
-void IParameter::SetValue(bool valid, const T& value) {
+void Parameter::SetValue(bool valid, const T& value) {
   std::scoped_lock lock(value_lock_);
   valid_ = valid;
 
@@ -189,13 +195,13 @@ void IParameter::SetValue(bool valid, const T& value) {
 }
 
 template <>
-void IParameter::SetValue(bool valid, const bool& value);
+void Parameter::SetValue(bool valid, const bool& value);
 
 template <>
-void IParameter::SetValue(bool valid, const std::string& value);
+void Parameter::SetValue(bool valid, const std::string& value);
 
 template <>
-void IParameter::SetValue(bool valid, const ByteArray& value);
+void Parameter::SetValue(bool valid, const ByteArray& value);
 
 
 }  // namespace workflow

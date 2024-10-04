@@ -3,9 +3,9 @@
 * SPDX-License-Identifier: MIT
  */
 
-#include "workflow/ievent.h"
+#include "workflow/event.h"
 #include <util/stringutil.h>
-#include "workflow/iworkflow.h"
+#include "workflow/workflow.h"
 #include <chrono>
 #include <util/timestamp.h>
 
@@ -15,14 +15,14 @@ using namespace util::time;
 
 namespace workflow {
 
-IEvent::~IEvent() {
+Event::~Event() {
   stop_thread_ = true;
   if (working_thread_.joinable()) {
     working_thread_.join();
   }
 }
 
-IEvent::IEvent(const IEvent& event)
+Event::Event(const Event& event)
 :  name_(event.name_),
    description_(event.description_),
    type_(event.type_),
@@ -31,7 +31,7 @@ IEvent::IEvent(const IEvent& event)
 {
 }
 
-bool IEvent::operator==(const IEvent& event) const {
+bool Event::operator==(const Event& event) const {
   if (name_ != event.name_) return false;
   if (description_ != event.description_) return false;
   if (type_ != event.type_) return false;
@@ -41,8 +41,8 @@ bool IEvent::operator==(const IEvent& event) const {
 }
 
 
-void IEvent::EventTypeAsString(const std::string& type) {
-  IEvent temp;
+void Event::EventTypeAsString(const std::string& type) {
+  Event temp;
   for (auto index = static_cast<int>(EventType::Init);
        index <= static_cast<int>(EventType::Parameter);
        ++index) {
@@ -55,7 +55,7 @@ void IEvent::EventTypeAsString(const std::string& type) {
   }
 }
 
-std::string IEvent::EventTypeAsString() const {
+std::string Event::EventTypeAsString() const {
   switch (Type()) {
     case EventType::Init:
       return "Init Event";
@@ -78,7 +78,7 @@ std::string IEvent::EventTypeAsString() const {
   return {};
 }
 
-void IEvent::SaveXml(IXmlNode& root) const {
+void Event::SaveXml(IXmlNode& root) const {
   auto& event_root = root.AddNode("Event");
   event_root.SetAttribute("name", name_);
   event_root.SetProperty("Name", name_);
@@ -88,7 +88,7 @@ void IEvent::SaveXml(IXmlNode& root) const {
   event_root.SetProperty("Period", period_);
 }
 
-void IEvent::ReadXml(const IXmlNode& root) {
+void Event::ReadXml(const IXmlNode& root) {
   name_ = root.Property<std::string>("Name");
   description_ = root.Property<std::string>("Description");
   EventTypeAsString( root.Property<std::string>("Type"));
@@ -96,7 +96,7 @@ void IEvent::ReadXml(const IXmlNode& root) {
   period_ = root.Property<uint64_t>("Period", 1000);
 }
 
-void IEvent::Init() {
+void Event::Init() {
   switch (type_) {
     case EventType::Init: {
       for (auto* workflow : workflow_list_) {
@@ -118,7 +118,7 @@ void IEvent::Init() {
         step_time_ = 1'000'000'000;
       }
       stop_thread_ = false;
-      working_thread_ = std::thread(&IEvent::CyclicTask, this);
+      working_thread_ = std::thread(&Event::CyclicTask, this);
       break;
 
     case EventType::Periodic: {
@@ -140,7 +140,7 @@ void IEvent::Init() {
       next_time_ += static_cast<int64_t>(step_time_);
 
       stop_thread_ = false;
-      working_thread_ = std::thread(&IEvent::PeriodicTask, this);
+      working_thread_ = std::thread(&Event::PeriodicTask, this);
       break;
     }
 
@@ -150,7 +150,7 @@ void IEvent::Init() {
   }
 }
 
-void IEvent::Tick() {
+void Event::Tick() {
   switch (type_) {
     case EventType::Exit:
     case EventType::Init:
@@ -170,7 +170,7 @@ void IEvent::Tick() {
   }
 }
 
-void IEvent::Exit() {
+void Event::Exit() {
   switch (type_) {
 
     case EventType::Exit: {
@@ -195,17 +195,17 @@ void IEvent::Exit() {
   }
 }
 
-void IEvent::AttachWorkflow(IWorkflow* workflow){
+void Event::AttachWorkflow(Workflow* workflow){
   if (workflow != nullptr) {
     workflow_list_.emplace_back(workflow);
   }
 }
 
-void IEvent::DetachWorkflows() {
+void Event::DetachWorkflows() {
   workflow_list_.clear();
 }
 
-void IEvent::CyclicTask() {
+void Event::CyclicTask() {
   while (!stop_thread_) {
     Tick();
     std::chrono::nanoseconds duration(step_time_);
@@ -213,7 +213,7 @@ void IEvent::CyclicTask() {
   }
 }
 
-void IEvent::PeriodicTask() {
+void Event::PeriodicTask() {
   while (!stop_thread_) {
     const auto now = std::chrono::system_clock::now();
     const std::chrono::nanoseconds temp(next_time_);

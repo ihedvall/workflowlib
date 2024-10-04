@@ -4,7 +4,7 @@
  */
 
 #include <gtest/gtest.h>
-#include "workflow/ievent.h"
+#include "workflow/event.h"
 #include <string_view>
 #include <boost/program_options.hpp>
 
@@ -13,7 +13,7 @@ using namespace boost::program_options;
 namespace workflow::test {
 
 TEST(IRunner, Properties) {
-  IRunner task;
+  ITask task;
 
   constexpr std::string_view kOrigName = "William";
   task.Name(kOrigName.data());
@@ -27,8 +27,8 @@ TEST(IRunner, Properties) {
   task.Documentation(kOrigDoc.data());
   EXPECT_STREQ(task.Documentation().c_str(), kOrigDoc.data() );
 
-  task.Type(RunnerType::PythonRunner);
-  EXPECT_EQ(task.Type(), RunnerType::PythonRunner);
+  task.Type(TaskType::PythonTask);
+  EXPECT_EQ(task.Type(), TaskType::PythonTask);
 
   task.Period(1.23); // seconds
   EXPECT_DOUBLE_EQ(task.Period(), 1.23);
