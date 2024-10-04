@@ -31,7 +31,7 @@ class BOOST_SYMBOL_VISIBLE ITaskFactory {
   [[nodiscard]] const ITask* GetTemplate(const std::string& name) const;
   [[nodiscard]] ITask* GetTemplate(const std::string& name);
 
-  [[nodiscard]] virtual std::unique_ptr<ITask> CreateRunner(const ITask& source) const = 0;
+  [[nodiscard]] virtual std::unique_ptr<ITask> CreateTask(const ITask& source) const = 0;
 
   [[nodiscard]] TemplateList& Templates() {return template_list_;}
   [[nodiscard]] const TemplateList& Templates() const {return template_list_;}

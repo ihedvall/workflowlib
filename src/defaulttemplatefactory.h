@@ -13,7 +13,7 @@ class DefaultTemplateFactory : public ITaskFactory {
  public:
   DefaultTemplateFactory();
   static const ITaskFactory& Instance();
-  [[nodiscard]] std::unique_ptr<ITask> CreateRunner(const ITask& source) const override;
+  [[nodiscard]] std::unique_ptr<ITask> CreateTask(const ITask& source) const override;
 };
 
 } // workflow

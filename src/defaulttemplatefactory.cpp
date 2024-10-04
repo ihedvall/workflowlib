@@ -21,7 +21,7 @@
 
 using namespace util::string;
 
-BOOST_DLL_ALIAS(workflow::DefaultTemplateFactory::Instance, GetRunnerFactory)
+BOOST_DLL_ALIAS(workflow::DefaultTemplateFactory::Instance, GetTaskFactory)
 
 namespace workflow {
 
@@ -49,28 +49,28 @@ DefaultTemplateFactory::DefaultTemplateFactory() {
   }
 }
 
-std::unique_ptr<ITask> DefaultTemplateFactory::CreateRunner(const ITask &source) const {
-  std::unique_ptr<ITask> runner;
+std::unique_ptr<ITask> DefaultTemplateFactory::CreateTask(const ITask &source) const {
+  std::unique_ptr<ITask> task;
   const auto& template_name = source.Template();
   if (IEquals(template_name, kInitDirectory.data())) {
     auto temp = std::make_unique<InitDirectoryData>(source);
-    runner = std::move(temp);
+    task = std::move(temp);
   } else if (IEquals(template_name, kScanDirectory.data())) {
     auto temp = std::make_unique<ScanDirectoryData>(source);
-    runner = std::move(temp);
+    task = std::move(temp);
   } else if (IEquals(template_name, kSyslogInput.data())) {
     auto temp = std::make_unique<SyslogInput>(source);
-    runner = std::move(temp);
+    task = std::move(temp);
   } else if (IEquals(template_name, kSyslogPublisher.data())) {
     auto temp = std::make_unique<SyslogPublisher>(source);
-    runner = std::move(temp);
+    task = std::move(temp);
   } else if (IEquals(template_name, kRunSyslogSchedule.data())) {
     auto temp = std::make_unique<RunSyslogSchedule>(source);
-    runner = std::move(temp);
+    task = std::move(temp);
   } else {
-    runner = std::make_unique<ITask>(source);
+    task = std::make_unique<ITask>(source);
   }
-  return runner;
+  return task;
 }
 
 } // workflow

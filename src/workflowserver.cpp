@@ -439,7 +439,7 @@ std::unique_ptr<ITask> WorkflowServer::CreateRunner(const ITask &templ) const {
       continue;
     }
     if (factory->HasTemplate(template_name)) {
-      return factory->CreateRunner(templ);
+      return factory->CreateTask(templ);
     }
   }
   return {};
