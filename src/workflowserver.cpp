@@ -24,62 +24,6 @@ WorkflowServer::WorkflowServer() {
 
  const auto& default_runner = DefaultTemplateFactory::Instance();
  factory_list_.emplace_back(&default_runner);
-
-}
-
-WorkflowServer::WorkflowServer(const WorkflowServer& server)
-: name_(server.name_),
-  description_(server.description_),
-  property_list_(server.property_list_)
-{
-  if (server.parameter_container_) {
-    parameter_container_ =
-        std::make_unique<ParameterContainer>(*server.parameter_container_);
-  }
-  if (server.event_engine_) {
-    event_engine_ = std::make_unique<EventEngine>(*server.event_engine_);
-  }
-  for (const auto& workflow : server.workflow_list_) {
-    if (!workflow) {
-      continue;
-    }
-    auto temp = std::make_unique<Workflow>(*workflow);
-    workflow_list_.push_back(std::move(temp));
-  }
-  factory_list_ = server.factory_list_;
-}
-
-WorkflowServer& WorkflowServer::operator=(const WorkflowServer& server) {
-  if (this == &server) {
-    return *this;
-  }
-  name_ = server.name_;
-  description_ = server.description_;
-  property_list_ = server.property_list_;
-
-  parameter_container_.reset();
-  if (server.parameter_container_) {
-    auto temp = std::make_unique<ParameterContainer>(
-        *server.parameter_container_);
-    parameter_container_ = std::move(temp);
-  }
-
-  event_engine_.reset();
-  if (server.event_engine_) {
-    auto temp = std::make_unique<EventEngine>(
-        *server.event_engine_);
-    event_engine_ = std::move(temp);
-  }
-
-  workflow_list_.clear();
-  for (const auto& workflow : server.workflow_list_) {
-    if (!workflow) continue;
-    auto temp = std::make_unique<Workflow>(*workflow);
-    workflow_list_.push_back(std::move(temp));
-  }
-
-  factory_list_ = server.factory_list_;
-  return *this;
 }
 
 bool WorkflowServer::operator==(const WorkflowServer& server) const {

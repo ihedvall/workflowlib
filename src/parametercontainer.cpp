@@ -44,26 +44,6 @@ bool SortParameters(const std::unique_ptr<workflow::Parameter>& par1,
 
 namespace workflow {
 
-ParameterContainer::ParameterContainer(const ParameterContainer& container)
-  : ignore_case_name_(container.ignore_case_name_)
-{
-  for (const auto& device : container.device_list_) {
-    if (!device) {
-      continue;
-    }
-    auto temp = std::make_unique<Device>(*device);
-    device_list_.emplace_back( std::move(temp) );
-  }
-
-  for (const auto& parameter : container.parameter_list_) {
-    if (!parameter) {
-      continue;
-    }
-    auto temp = std::make_unique<Parameter>(*parameter);
-    parameter_list_.emplace_back( std::move(temp) );
-  }
-}
-
 bool ParameterContainer::operator==(const ParameterContainer& container) const {
 
   if (ignore_case_name_ != container.ignore_case_name_) return false;
@@ -274,7 +254,6 @@ void ParameterContainer::ReadXml(const IXmlNode& root) {
   }
 
 }
-
 
 void ParameterContainer::Sort() {
   std::sort(device_list_.begin(),device_list_.end(), SortDevices);

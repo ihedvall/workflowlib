@@ -41,7 +41,8 @@ bool Parameter::operator==(const Parameter& parameter) const {
 }
 
 template <>
-bool Parameter::GetValue(bool& value) const {
+bool Parameter::GetValue(bool& value) {
+  OnGetValue();
   std::scoped_lock lock(value_lock_);
   switch (DataType()) {
     case ParameterDataType::BooleanType:
@@ -127,7 +128,8 @@ bool Parameter::GetValue(bool& value) const {
 }
 
 template <>
-bool Parameter::GetValue(std::string& value) const {
+bool Parameter::GetValue(std::string& value) {
+  OnGetValue();
   std::scoped_lock lock(value_lock_);
   switch (DataType()) {
     case ParameterDataType::BooleanType:
@@ -177,7 +179,8 @@ bool Parameter::GetValue(std::string& value) const {
 }
 
 template <>
-bool Parameter::GetValue(ByteArray& value) const {
+bool Parameter::GetValue(ByteArray& value) {
+  OnGetValue();
   std::scoped_lock lock(value_lock_);
 
   switch (DataType()) {
@@ -230,170 +233,164 @@ bool Parameter::GetValue(ByteArray& value) const {
 
 template <>
 void Parameter::SetValue(bool valid, const bool& value) {
-  std::scoped_lock lock(value_lock_);
-  valid_ = valid;
+  {
+    std::scoped_lock lock(value_lock_);
+    valid_ = valid;
 
-  switch (data_type_) {
-    case ParameterDataType::BooleanType:
-    case ParameterDataType::UnsignedType:
-      value_uint_ = value ? 1 : 0;
-      break;
+    switch (data_type_) {
+      case ParameterDataType::BooleanType:
+      case ParameterDataType::UnsignedType:value_uint_ = value ? 1 : 0;
+        break;
 
-    case ParameterDataType::EnumType:
-    case ParameterDataType::SignedType:
-      value_int_ = value ? 1 : 0;
-      break;
+      case ParameterDataType::EnumType:
+      case ParameterDataType::SignedType:value_int_ = value ? 1 : 0;
+        break;
 
-    case ParameterDataType::FloatType:
-      value_float_ = value ? 1.0 : 0.0;
-      break;
+      case ParameterDataType::FloatType:value_float_ = value ? 1.0 : 0.0;
+        break;
 
-    case ParameterDataType::StringType:
-      value_text_ = value ? "1" : "0";
-      break;
+      case ParameterDataType::StringType:value_text_ = value ? "1" : "0";
+        break;
 
+      case ParameterDataType::ByteArrayType:value_array_.resize(1);
+        value_array_[0] = value ? 1 : 0;
+        break;
 
-    case ParameterDataType::ByteArrayType:
-      value_array_.resize(1);
-      value_array_[0] = value ? 1 : 0;
-       break;
-
-    default:
-      break;
+      default:break;
+    }
   }
+  OnSetValue();
 }
 
 template <>
 void Parameter::SetValue(bool valid, const std::string& value) {
-  std::scoped_lock lock(value_lock_);
-  valid_ = valid;
+  {
+    std::scoped_lock lock(value_lock_);
+    valid_ = valid;
 
-  switch (data_type_) {
-    case ParameterDataType::BooleanType: {
-      if (value.empty()) {
-        value_uint_ = 0;
-      } else {
-        switch(value[0]) {
-          case 'T': // True
-          case 't':
-          case 'Y': // Yes
-          case 'y':
-          case 'E': // "Enabled"
-          case 'e':
-          case '1':
-            value_uint_ = 1;
-            break;
-          case 'O': // ON
-          case 'o':
-            if (value.size() > 1 && value[1] == 'N' || value[1] == 'n') {
-              value_uint_ = 1;
-            } else {
-              value_uint_ = 0;
-            }
-            break;
-
-          default:
-            value_uint_ = 0;
-            break;
-        }
-
-      }
-      break;
-    }
-
-    case ParameterDataType::UnsignedType:
-      try {
-        value_uint_ = std::stoull(value);
-      } catch (const std::exception&) {}
-      break;
-
-    case ParameterDataType::EnumType:
-      try {
-        const auto itr = std::ranges::find_if(enum_list_,
-                                              [&] (const auto& enum_itr) {
-          return enum_itr.second == value;
-        });
-        if (itr != enum_list_.cend()) {
-          value_int_ = itr->first;
+    switch (data_type_) {
+      case ParameterDataType::BooleanType: {
+        if (value.empty()) {
+          value_uint_ = 0;
         } else {
-          value_int_ = std::stoll(value);
+          switch (value[0]) {
+            case 'T': // True
+            case 't':
+            case 'Y': // Yes
+            case 'y':
+            case 'E': // "Enabled"
+            case 'e':
+            case '1':value_uint_ = 1;
+              break;
+            case 'O': // ON
+            case 'o':
+              if (value.size() > 1 && value[1] == 'N' || value[1] == 'n') {
+                value_uint_ = 1;
+              } else {
+                value_uint_ = 0;
+              }
+              break;
+
+            default:value_uint_ = 0;
+              break;
+          }
+
         }
-      } catch (const std::exception&) {}
-      break;
+        break;
+      }
 
-    case ParameterDataType::SignedType:
-      try {
-        value_int_ = std::stoll(value);
-      } catch (const std::exception&) {}
-      break;
+      case ParameterDataType::UnsignedType:
+        try {
+          value_uint_ = std::stoull(value);
+        } catch (const std::exception &) {}
+        break;
 
-    case ParameterDataType::FloatType:
-      try {
-        value_float_ = std::stod(value);
-      } catch (const std::exception&) {}
-      break;
+      case ParameterDataType::EnumType:
+        try {
+          const auto itr = std::ranges::find_if(enum_list_,
+                                                [&](const auto &enum_itr) {
+                                                  return enum_itr.second == value;
+                                                });
+          if (itr != enum_list_.cend()) {
+            value_int_ = itr->first;
+          } else {
+            value_int_ = std::stoll(value);
+          }
+        } catch (const std::exception &) {}
+        break;
 
-    case ParameterDataType::StringType:
-      value_text_ = value;
-      break;
+      case ParameterDataType::SignedType:
+        try {
+          value_int_ = std::stoll(value);
+        } catch (const std::exception &) {}
+        break;
 
-    case ParameterDataType::ByteArrayType:
-      value_array_.resize(value.size());
-      memcpy(value_array_.data(),
-             reinterpret_cast<const uint8_t*>(value.data()),
-             value.size());
-      break;
+      case ParameterDataType::FloatType:
+        try {
+          value_float_ = std::stod(value);
+        } catch (const std::exception &) {}
+        break;
 
-    default:
-      break;
+      case ParameterDataType::StringType:value_text_ = value;
+        break;
+
+      case ParameterDataType::ByteArrayType:value_array_.resize(value.size());
+        memcpy(value_array_.data(),
+               reinterpret_cast<const uint8_t *>(value.data()),
+               value.size());
+        break;
+
+      default:break;
+    }
   }
+  OnSetValue();
 }
 
 template <>
 void Parameter::SetValue(bool valid, const ByteArray& value) {
-  std::scoped_lock lock(value_lock_);
-  valid_ = valid;
+  {
+    std::scoped_lock lock(value_lock_);
+    valid_ = valid;
 
-  switch (data_type_) {
-    case ParameterDataType::UnsignedType:
-    case ParameterDataType::BooleanType:
-      if (value.empty()) {
-        value_uint_ = 0;
-      } else {
-        value_uint_ = value[0];
-      }
-      break;
+    switch (data_type_) {
+      case ParameterDataType::UnsignedType:
+      case ParameterDataType::BooleanType:
+        if (value.empty()) {
+          value_uint_ = 0;
+        } else {
+          value_uint_ = value[0];
+        }
+        break;
 
-    case ParameterDataType::EnumType:
-    case ParameterDataType::SignedType:
-      if (value.empty()) {
-        value_int_ = 0;
-      } else {
-        value_int_ = value[0];
-      }
-      break;
+      case ParameterDataType::EnumType:
+      case ParameterDataType::SignedType:
+        if (value.empty()) {
+          value_int_ = 0;
+        } else {
+          value_int_ = value[0];
+        }
+        break;
 
-    case ParameterDataType::FloatType:
-      if (value.empty()) {
-        value_float_ = 0;
-      } else {
-        value_float_ = value[0];
-      }
-      break;
+      case ParameterDataType::FloatType:
+        if (value.empty()) {
+          value_float_ = 0;
+        } else {
+          value_float_ = value[0];
+        }
+        break;
 
-    case ParameterDataType::StringType:
-      value_text_.resize(value.size());
-      memcpy(value_text_.data(), reinterpret_cast<const char*>(value.data()),
-             value.size());
-      break;
+      case ParameterDataType::StringType:value_text_.resize(value.size());
+        memcpy(value_text_.data(), reinterpret_cast<const char *>(value.data()),
+               value.size());
+        break;
 
-    case ParameterDataType::ByteArrayType:
-      value_array_ = value;
-      break;
+      case ParameterDataType::ByteArrayType:value_array_ = value;
+        break;
 
-    default:
-      break;
+      default:break;
+    }
   }
+  OnSetValue();
 }
 
 void Parameter::DataTypeAsString(const std::string& type) {
@@ -509,5 +506,11 @@ void Parameter::ReadXml(const IXmlNode& root) {
   }
 }
 
+void Parameter::OnSetValue() {
+
+}
+void Parameter::OnGetValue() {
+
+}
 
 }  // namespace workflow

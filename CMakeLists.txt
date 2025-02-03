@@ -19,7 +19,9 @@ include(script/utillib.cmake)
 include(script/boost.cmake)
 include(script/expat.cmake)
 
+
 if (WORKFLOW_TEST)
+    include(script/openssl.cmake)
     include(script/googletest.cmake)
 endif()
 

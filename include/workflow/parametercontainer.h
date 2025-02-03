@@ -26,7 +26,9 @@ class ParameterContainer {
  public:
   ParameterContainer() = default;
   virtual ~ParameterContainer() = default;
-  ParameterContainer(const ParameterContainer& container);
+
+  ParameterContainer(const ParameterContainer& container) = delete;
+
   [[nodiscard]] bool operator == (const ParameterContainer& container) const;
 
   void IgnoreCase(bool ignore) {ignore_case_name_ = ignore; }
@@ -42,14 +44,11 @@ class ParameterContainer {
 
   [[nodiscard]] std::vector<std::string> Units() const;
 
-  //template <typename T>
-  //void ParametersByType(std::vector<T*>& list) const;
-
-  Device* CreateDevice(const std::string& device_name);
+  virtual Device* CreateDevice(const std::string& device_name);
   [[nodiscard]] Device* GetDevice(const std::string& name) const;
   void DeleteDevice(const std::string& name);
 
-  Parameter* CreateParameter(const std::string& device_name,
+  virtual Parameter* CreateParameter(const std::string& device_name,
                              const std::string& parameter_name);
   [[nodiscard]] Parameter* GetParameter(const std::string& device,
                                         const std::string& name) const;
@@ -73,19 +72,4 @@ class ParameterContainer {
 
   bool ignore_case_name_ = false;
 };
-/*
-template <typename T>
-void ParameterContainer::ParametersByType(std::vector<T*>& list) const {
-  for (const auto& parameter : parameter_list_) {
-    auto* par = parameter.get();
-    if (par == nullptr) {
-      continue;
-    }
-    auto* par_type = dynamic_cast<T*>(par);
-    if (par_type != nullptr) {
-      list.push_back(par_type);
-    }
-  }
-}
-*/
 }  // namespace workflow

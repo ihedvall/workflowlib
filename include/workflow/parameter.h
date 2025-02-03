@@ -82,7 +82,7 @@ class Parameter {
   [[nodiscard]] bool Valid() const;
 
   template <typename T>
-  [[nodiscard]] bool GetValue(T& value) const;
+  [[nodiscard]] bool GetValue(T& value);
 
   template <typename T>
   void SetValue(bool valid, const T& value);
@@ -94,6 +94,9 @@ class Parameter {
   virtual void SaveXml(util::xml::IXmlNode& root) const;
   virtual void ReadXml(const util::xml::IXmlNode& root);
 
+ protected:
+  virtual void OnSetValue();
+  virtual void OnGetValue();
  private:
   std::string name_; ///< Name used internally
   std::string unit_; ///< Unit of measure
@@ -118,7 +121,8 @@ class Parameter {
 };
 
 template <typename T>
-bool Parameter::GetValue(T& value) const {
+bool Parameter::GetValue(T& value) {
+  OnGetValue();
   std::scoped_lock lock(value_lock_);
   switch (data_type_) {
     case ParameterDataType::UnsignedType:
@@ -148,50 +152,50 @@ bool Parameter::GetValue(T& value) const {
     default:
       break;
   }
+
   return valid_;
 }
 
 template <>
-bool Parameter::GetValue(bool& value) const;
+bool Parameter::GetValue(bool& value);
 
 template <>
-bool Parameter::GetValue(std::string& value) const;
+bool Parameter::GetValue(std::string& value);
 
 template <>
-bool Parameter::GetValue(ByteArray& value) const;
+bool Parameter::GetValue(ByteArray& value);
 
 template <typename T>
 void Parameter::SetValue(bool valid, const T& value) {
-  std::scoped_lock lock(value_lock_);
-  valid_ = valid;
+  {
+    std::scoped_lock lock(value_lock_);
+    valid_ = valid;
 
-  switch (data_type_) {
-    case ParameterDataType::BooleanType:
-    case ParameterDataType::UnsignedType:
-      value_uint_ = static_cast<uint64_t>(value);
-      break;
+    switch (data_type_) {
+      case ParameterDataType::BooleanType:
+      case ParameterDataType::UnsignedType:value_uint_ = static_cast<uint64_t>(value);
+        break;
 
-    case ParameterDataType::EnumType:
-    case ParameterDataType::SignedType:
-      value_int_ = static_cast<int64_t>(value);
-      break;
+      case ParameterDataType::EnumType:
+      case ParameterDataType::SignedType:value_int_ = static_cast<int64_t>(value);
+        break;
 
-    case ParameterDataType::FloatType:
-      value_float_ = static_cast<double>(value);
-      break;
+      case ParameterDataType::FloatType:value_float_ = static_cast<double>(value);
+        break;
 
-    case ParameterDataType::StringType: {
-      try {
-        value_text_ = std::to_string(value);
-      } catch( const std::exception& ) {
+      case ParameterDataType::StringType: {
+        try {
+          value_text_ = std::to_string(value);
+        } catch (const std::exception &) {
+        }
+        break;
       }
-      break;
-    }
 
-    case ParameterDataType::ByteArrayType:
-    default:
-      break;
+      case ParameterDataType::ByteArrayType:
+      default:break;
+    }
   }
+  OnSetValue();
 }
 
 template <>

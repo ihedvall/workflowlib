@@ -31,8 +31,9 @@ class WorkflowServer {
   WorkflowServer();
   virtual ~WorkflowServer() = default;
 
-  WorkflowServer(const WorkflowServer& server);
-  WorkflowServer& operator = (const WorkflowServer& server);
+  WorkflowServer(const WorkflowServer& server) = delete;
+  WorkflowServer& operator = (const WorkflowServer& server) = delete;
+
   [[nodiscard]] bool operator == (const WorkflowServer& server) const;
 
   void Name(const std::string& name) {name_ = name;}
