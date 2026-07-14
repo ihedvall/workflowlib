@@ -16,9 +16,9 @@ set(CMAKE_DEBUG_POSTFIX d)
 
 include(CMakePrintHelpers)
 include(script/utillib.cmake)
+include(script/boost.cmake)
 
 if (WORKFLOW_TEST)
-    include(script/boost.cmake)
     include(script/expat.cmake)
     include(script/openssl.cmake)
     include(script/googletest.cmake)
