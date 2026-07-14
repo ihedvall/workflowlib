@@ -10,7 +10,7 @@
 #include <memory>
 
 #include <util/stringutil.h>
-#include <boost/config.hpp>
+
 #include "workflow/itask.h"
 
 
@@ -18,7 +18,7 @@ namespace workflow {
 
 using TemplateList = std::map<std::string, std::unique_ptr<ITask>, util::string::IgnoreCase>;
 
-class BOOST_SYMBOL_VISIBLE ITaskFactory {
+class ITaskFactory {
  public:
   ITaskFactory() = default;
   virtual ~ITaskFactory() = default;

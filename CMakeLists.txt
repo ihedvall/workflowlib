@@ -16,11 +16,10 @@ set(CMAKE_DEBUG_POSTFIX d)
 
 include(CMakePrintHelpers)
 include(script/utillib.cmake)
-include(script/boost.cmake)
-include(script/expat.cmake)
-
 
 if (WORKFLOW_TEST)
+    include(script/boost.cmake)
+    include(script/expat.cmake)
     include(script/openssl.cmake)
     include(script/googletest.cmake)
 endif()
@@ -28,8 +27,6 @@ endif()
 if (WORKFLOW_DOC)
     include(script/doxygen.cmake)
 endif()
-
-#include(script/wxwidgets.cmake)
 
 add_library(workflow
         src/eventengine.cpp include/workflow/eventengine.h
@@ -57,7 +54,7 @@ target_include_directories(workflow PUBLIC
 
 target_include_directories(workflow PRIVATE ${utillib_SOURCE_DIR}/include)
 target_include_directories(workflow PRIVATE ${Boost_INCLUDE_DIRS})
-target_include_directories(workflow PRIVATE expat)
+#target_include_directories(workflow PRIVATE expat)
 
 cmake_print_properties(TARGETS workflow PROPERTIES INCLUDE_DIRECTORIES)
 
